@@ -12,8 +12,10 @@ Do not ask follow-up questions. Use existing context, inspect repo, choose sane 
 ## Quick start
 
 1. Create todo file before edits:
-   - Prefer repo temp dir: `.pi-runs/todos/`
-   - If unavailable, use OS temp dir.
+   - Use OS temp dir, not repo dir.
+   - Put files under temp subdir: `pi-runs/todos/`
+   - Example paths: `$TMPDIR/pi-runs/todos/`, `/tmp/pi-runs/todos/`, `%TEMP%\\pi-runs\\todos\\`
+   - Never create `.pi-runs` or other run-tracking dirs inside repo unless user explicitly asks.
    - Filename: `YYYY-MM-DD-HHMMSS-run-to-completion-[short-slug].md`
 2. Read every referenced plan/spec/todo/testcase file in full.
 3. Convert conversation/context/files into concrete checklist with one or more tasks for every bullet/requirement.
