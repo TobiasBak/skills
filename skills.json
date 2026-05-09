@@ -1,0 +1,13 @@
+{
+  "external": [
+    "caveman",
+    "grill-me",
+    "write-a-skill",
+    "improve-codebase-architecture",
+    "tdd"
+  ],
+  "personal": [
+    "feedback-loop",
+    "run-to-completion"
+  ]
+}

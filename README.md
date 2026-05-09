@@ -56,8 +56,22 @@ By default, skills are linked into:
 
 Override with `PI_SKILLS_DIR` if needed.
 
-The installer links selected external skills and all personal skills under `skills/*` that contain `SKILL.md`.
+The installer links skills listed in `skills.json`.
+
+On Windows, prefer PowerShell. Git Bash symlinks can be seen incorrectly by native Windows/Pi tools.
+
+Strict install/fix:
+
+```powershell
+./scripts/install-links.ps1 -Fix
+```
+
+Verify links:
+
+```powershell
+./scripts/verify-links.ps1
+```
 
 ## Adding a personal skill
 
-Create a skill directory under `skills/` with a `SKILL.md`, then rerun the install script.
+Create a skill directory under `skills/` with a `SKILL.md`, add the skill name to `skills.json`, then rerun the install script.
