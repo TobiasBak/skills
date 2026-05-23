@@ -9,18 +9,18 @@ git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/sk
 cd "$TMP/repo"
 git sparse-checkout set --no-cone \
   skills/productivity/caveman \
-  skills/productivity/grill-me \
   skills/productivity/write-a-skill \
+  skills/engineering/grill-with-docs \
   skills/engineering/improve-codebase-architecture \
   skills/engineering/tdd
 
-for skill in caveman grill-me write-a-skill improve-codebase-architecture tdd; do
+for skill in caveman grill-me grill-with-docs write-a-skill improve-codebase-architecture tdd; do
   rm -rf "$DEST/$skill"
 done
 
 cp -R skills/productivity/caveman "$DEST/caveman"
-cp -R skills/productivity/grill-me "$DEST/grill-me"
 cp -R skills/productivity/write-a-skill "$DEST/write-a-skill"
+cp -R skills/engineering/grill-with-docs "$DEST/grill-with-docs"
 cp -R skills/engineering/improve-codebase-architecture "$DEST/improve-codebase-architecture"
 cp -R skills/engineering/tdd "$DEST/tdd"
 

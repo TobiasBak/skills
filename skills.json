@@ -1,7 +1,7 @@
 {
   "external": [
     "caveman",
-    "grill-me",
+    "grill-with-docs",
     "write-a-skill",
     "improve-codebase-architecture",
     "tdd"

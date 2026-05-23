@@ -9,21 +9,21 @@ try {
     try {
         git sparse-checkout set --no-cone `
           skills/productivity/caveman `
-          skills/productivity/grill-me `
           skills/productivity/write-a-skill `
+          skills/engineering/grill-with-docs `
           skills/engineering/improve-codebase-architecture `
           skills/engineering/tdd
     } finally {
         Pop-Location
     }
 
-    @("caveman", "grill-me", "write-a-skill", "improve-codebase-architecture", "tdd") | ForEach-Object {
+    @("caveman", "grill-me", "grill-with-docs", "write-a-skill", "improve-codebase-architecture", "tdd") | ForEach-Object {
         Remove-Item -Recurse -Force (Join-Path $Dest $_) -ErrorAction SilentlyContinue
     }
 
     Copy-Item -Recurse (Join-Path $Tmp "repo/skills/productivity/caveman") (Join-Path $Dest "caveman")
-    Copy-Item -Recurse (Join-Path $Tmp "repo/skills/productivity/grill-me") (Join-Path $Dest "grill-me")
     Copy-Item -Recurse (Join-Path $Tmp "repo/skills/productivity/write-a-skill") (Join-Path $Dest "write-a-skill")
+    Copy-Item -Recurse (Join-Path $Tmp "repo/skills/engineering/grill-with-docs") (Join-Path $Dest "grill-with-docs")
     Copy-Item -Recurse (Join-Path $Tmp "repo/skills/engineering/improve-codebase-architecture") (Join-Path $Dest "improve-codebase-architecture")
     Copy-Item -Recurse (Join-Path $Tmp "repo/skills/engineering/tdd") (Join-Path $Dest "tdd")
 

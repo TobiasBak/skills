@@ -11,7 +11,7 @@ Selected public skills from:
 Currently vendored:
 
 - `caveman`
-- `grill-me`
+- `grill-with-docs`
 - `write-a-skill`
 - `improve-codebase-architecture`
 - `tdd`
