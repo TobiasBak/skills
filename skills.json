@@ -7,7 +7,6 @@
     "tdd"
   ],
   "personal": [
-    "feedback-loop",
-    "run-to-completion"
+    "feedback-loop"
   ]
 }
