@@ -10,7 +10,6 @@ Selected public skills from:
 
 Currently vendored:
 
-- `caveman`
 - `grill-with-docs`
 - `write-a-skill`
 - `improve-codebase-architecture`

@@ -8,7 +8,6 @@ try {
     Push-Location (Join-Path $Tmp "repo")
     try {
         git sparse-checkout set --no-cone `
-          skills/productivity/caveman `
           skills/productivity/write-a-skill `
           skills/engineering/grill-with-docs `
           skills/engineering/improve-codebase-architecture `
@@ -17,11 +16,10 @@ try {
         Pop-Location
     }
 
-    @("caveman", "grill-me", "grill-with-docs", "write-a-skill", "improve-codebase-architecture", "tdd") | ForEach-Object {
+    @("grill-me", "grill-with-docs", "write-a-skill", "improve-codebase-architecture", "tdd") | ForEach-Object {
         Remove-Item -Recurse -Force (Join-Path $Dest $_) -ErrorAction SilentlyContinue
     }
 
-    Copy-Item -Recurse (Join-Path $Tmp "repo/skills/productivity/caveman") (Join-Path $Dest "caveman")
     Copy-Item -Recurse (Join-Path $Tmp "repo/skills/productivity/write-a-skill") (Join-Path $Dest "write-a-skill")
     Copy-Item -Recurse (Join-Path $Tmp "repo/skills/engineering/grill-with-docs") (Join-Path $Dest "grill-with-docs")
     Copy-Item -Recurse (Join-Path $Tmp "repo/skills/engineering/improve-codebase-architecture") (Join-Path $Dest "improve-codebase-architecture")
