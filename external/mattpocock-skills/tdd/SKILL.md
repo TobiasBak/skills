@@ -15,6 +15,12 @@ description: Test-driven development with red-green-refactor loop. Use when user
 
 See [tests.md](tests.md) for examples and [mocking.md](mocking.md) for mocking guidelines.
 
+## Verification Surface
+
+When a behavior cannot be tested through a useful public interface, workflow boundary, command, or output, treat that as a design problem to improve. Do not retreat to implementation-detail tests and present them as sufficient.
+
+If improving the verification surface is larger than the current task, write the best honest partial check, state the verification gap, and name the next interface or workflow boundary that would make the behavior testable.
+
 ## Anti-Pattern: Horizontal Slices
 
 **DO NOT write all tests first, then all implementation.** This is "horizontal slicing" - treating RED as "write all tests" and GREEN as "write all code."
@@ -52,6 +58,7 @@ Before writing any code:
 - [ ] Confirm with user which behaviors to test (prioritize)
 - [ ] Identify opportunities for [deep modules](deep-modules.md) (small interface, deep implementation)
 - [ ] Design interfaces for [testability](interface-design.md)
+- [ ] Identify the verification surface for each important behavior
 - [ ] List the behaviors to test (not implementation steps)
 - [ ] Get user approval on the plan
 
@@ -103,6 +110,7 @@ After all tests pass, look for [refactor candidates](refactoring.md):
 ```
 [ ] Test describes behavior, not implementation
 [ ] Test uses public interface only
+[ ] Weak verification surfaces are improved or named as gaps
 [ ] Test would survive internal refactor
 [ ] Code is minimal for this test
 [ ] No speculative features added

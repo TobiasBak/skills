@@ -6,6 +6,7 @@
     "tdd"
   ],
   "personal": [
-    "feedback-loop"
+    "feedback-loop",
+    "repo-context-audit"
   ]
 }

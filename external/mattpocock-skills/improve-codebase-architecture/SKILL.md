@@ -55,7 +55,8 @@ For each candidate, the same template as before, but rendered as a card:
 - **Files** — which files/modules are involved
 - **Problem** — why the current architecture is causing friction
 - **Solution** — plain English description of what would change
-- **Benefits** — explained in terms of locality and leverage, and how tests would improve
+- **Benefits** — explained in terms of locality, leverage, and how the Verification Surface would improve
+- **Verification gap** — what important behavior is currently hard to prove, or why the current tests are too shallow
 - **Before / After diagram** — side-by-side, custom-drawn, illustrating the shallowness and the deepening
 - **Recommendation strength** — one of `Strong`, `Worth exploring`, `Speculative`, rendered as a badge
 
@@ -72,6 +73,8 @@ Do NOT propose interfaces yet. After the file is written, ask the user: "Which o
 ### 3. Grilling loop
 
 Once the user picks a candidate, drop into a grilling conversation. Walk the design tree with them — constraints, dependencies, the shape of the deepened module, what sits behind the seam, what tests survive.
+
+For Code-Affecting recommendations, do not accept weak tests as merely a test gap. If the current module shape makes behavior hard to verify, include improving the Verification Surface in the architecture conversation.
 
 Side effects happen inline as decisions crystallize:
 

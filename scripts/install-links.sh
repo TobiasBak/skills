@@ -18,12 +18,12 @@ fi
 
 mkdir -p "$TARGET_DIR"
 
-mapfile -t EXTERNAL_SKILLS < <(python3 - <<PY
+mapfile -t EXTERNAL_SKILLS < <(uv run python - <<PY
 import json
 print(*json.load(open('$REPO_ROOT/skills.json'))['external'], sep='\n')
 PY
 )
-mapfile -t PERSONAL_SKILLS < <(python3 - <<PY
+mapfile -t PERSONAL_SKILLS < <(uv run python - <<PY
 import json
 print(*json.load(open('$REPO_ROOT/skills.json'))['personal'], sep='\n')
 PY

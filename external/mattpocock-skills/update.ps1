@@ -1,7 +1,25 @@
+param(
+    [switch]$Force
+)
+
 $ErrorActionPreference = "Stop"
 
 $Dest = Resolve-Path $PSScriptRoot
+$RepoRoot = (Resolve-Path (Join-Path $Dest "../..")).Path
 $Tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("skills-" + [System.Guid]::NewGuid())
+$SkillPaths = @(
+    "external/mattpocock-skills/grill-with-docs",
+    "external/mattpocock-skills/write-a-skill",
+    "external/mattpocock-skills/improve-codebase-architecture",
+    "external/mattpocock-skills/tdd"
+)
+
+$PendingChanges = git -C $RepoRoot status --short -- $SkillPaths
+if ($PendingChanges -and !$Force) {
+    Write-Error ("Refusing to overwrite vendored skills with uncommitted local changes:`n" +
+        ($PendingChanges -join "`n") +
+        "`nReview or commit these changes, then rerun. Use -Force only when you intentionally want to overwrite them.")
+}
 
 try {
     git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills (Join-Path $Tmp "repo")
@@ -26,6 +44,10 @@ try {
     Copy-Item -Recurse (Join-Path $Tmp "repo/skills/engineering/tdd") (Join-Path $Dest "tdd")
 
     Write-Host "Updated Matt Pocock skills in $Dest"
+    Write-Host ""
+    Write-Host "Review vendored skill changes before committing:"
+    git -C $RepoRoot status --short -- $SkillPaths
+    git -C $RepoRoot --no-pager diff -- $SkillPaths
 } finally {
     Remove-Item -Recurse -Force $Tmp -ErrorAction SilentlyContinue
 }

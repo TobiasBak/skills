@@ -65,6 +65,8 @@ When the user uses vague or overloaded terms, propose a precise canonical term. 
 
 When domain relationships are being discussed, stress-test them with specific scenarios. Invent scenarios that probe edge cases and force the user to be precise about the boundaries between concepts.
 
+When the plan is code-affecting, ask what Verification Surface will prove the behavior. If the answer is missing, weak, or only a shallow unit test, challenge the plan and recommend improving the verification surface or naming the verification gap.
+
 ### Cross-reference with code
 
 When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?"

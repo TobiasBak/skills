@@ -10,6 +10,7 @@ description: Create new agent skills with proper structure, progressive disclosu
 1. **Gather requirements** - ask user about:
    - What task/domain does the skill cover?
    - What specific use cases should it handle?
+   - Will the skill affect code, tests, UI, scripts, automation, or generated artifacts?
    - Does it need executable scripts or just instructions?
    - Any reference materials to include?
 
@@ -51,6 +52,10 @@ description: Brief description of capability. Use when [specific triggers].
 ## Workflows
 
 [Step-by-step processes with checklists for complex tasks]
+
+## Verification
+
+[For code-affecting skills: expected verification surface, behavioral coverage guidance, and what to report if only partial verification is possible. Omit for skills that cannot affect implementation.]
 
 ## Advanced features
 
@@ -115,3 +120,4 @@ After drafting, verify:
 - [ ] Consistent terminology
 - [ ] Concrete examples included
 - [ ] References one level deep
+- [ ] Code-affecting skills include a concise Verification section with behavioral checks through a useful verification surface
