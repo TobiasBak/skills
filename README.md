@@ -32,10 +32,16 @@ Selected public skills from:
 
 Currently vendored:
 
-- `grill-with-docs`
-- `write-a-skill`
-- `improve-codebase-architecture`
+- `diagnosing-bugs`
 - `tdd`
+- `domain-modeling`
+- `codebase-design`
+- `handoff`
+- `writing-great-skills`
+- `grilling`
+- `grill-with-docs`
+- `improve-codebase-architecture`
+- `to-prd`
 
 Only the selected skill folders are kept. Root upstream files like `CLAUDE.md`, `CONTEXT.md`, and the upstream `README.md` are intentionally excluded.
 

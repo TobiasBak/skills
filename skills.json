@@ -1,12 +1,17 @@
 {
   "external": [
+    "diagnosing-bugs",
+    "tdd",
+    "domain-modeling",
+    "codebase-design",
+    "handoff",
+    "writing-great-skills",
+    "grilling",
     "grill-with-docs",
-    "write-a-skill",
     "improve-codebase-architecture",
-    "tdd"
+    "to-prd"
   ],
   "personal": [
-    "feedback-loop",
     "repo-context-audit"
   ]
 }

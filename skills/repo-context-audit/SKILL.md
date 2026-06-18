@@ -1,19 +1,16 @@
 ---
 name: repo-context-audit
-description: Audit and improve a repository's agent-facing context docs through guided questions and edits. Use when reviewing AGENTS.md, CONTEXT.md, README, ADRs, skill docs, repo mission, agent instructions, or context-bloat problems.
+description: Audit and improve repository context docs. Use when reviewing or editing AGENTS.md, CONTEXT.md, ADRs, README, skill docs, mission briefs, or agent-context bloat.
 ---
 
 # Repo Context Audit
 
-Review a repository's agent-facing documentation and improve it through a question-driven editing loop.
-
-The goal is not to create more rules. The goal is to make the repo's mission, language, critical trade-offs, and verification expectations clear enough that future agents make better decisions with less context.
+Make agent-facing docs act as decision surfaces: mission, language, trade-offs, and verification expectations should guide future agents without bloating context.
 
 ## Glossary
 
 - **Mission Brief** — the repo-level operating context that tells agents what the repository is trying to achieve, what trade-offs matter, what quality looks like, and which docs to use when making decisions.
 - **Root Context** — the repo-wide glossary. It should define shared language, not operating instructions or implementation detail.
-- **Context Discipline** — keeping only task-relevant information in working context through targeted discovery, concise summaries, and references.
 - **Verification Surface** — the public interface, workflow boundary, rendered artifact, command, or output through which behavior can be proven.
 
 ## Workflow
@@ -35,6 +32,8 @@ Assess:
 - Whether code-affecting guidance includes Verification Discipline and useful Verification Surfaces.
 - Where docs duplicate, conflict, go stale, or create avoidable context load.
 
+Completion criterion: you can state the repo's apparent mission, the docs that carry it, and the strongest documentation gap without loading more files.
+
 ### 2. Present Audit
 
 Summarize the repo's current documentation shape, then list the top 3 improvement candidates.
@@ -48,6 +47,8 @@ For each candidate include:
 
 Ask one question at a time. Provide your recommended answer with each question.
 
+Completion criterion: the user has one concrete question to answer and can see the edit you recommend if they agree.
+
 ### 3. Edit Inline
 
 After the developer answers, edit the relevant docs immediately. Do not batch resolved decisions.
@@ -60,6 +61,8 @@ Use this placement discipline:
 - Put hard-to-reverse, surprising trade-offs in `docs/adr/`.
 - Put skill-specific domain language in the skill's own `LANGUAGE.md`.
 
+Completion criterion: every resolved answer is captured in the document that owns that kind of knowledge.
+
 ### 4. Verify
 
 After edits:
@@ -68,6 +71,8 @@ After edits:
 - Search for old terms that should have been replaced.
 - Verify links and repo scripts when the docs or manifest affect them.
 - Report what changed, what was verified, and any remaining documentation gap.
+
+Completion criterion: changed docs agree on mission, vocabulary, and ownership; any remaining gap is named explicitly.
 
 ## Output Shape
 

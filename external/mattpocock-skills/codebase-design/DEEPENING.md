@@ -1,6 +1,6 @@
 # Deepening
 
-How to deepen a cluster of shallow modules safely, given its dependencies. Assumes the vocabulary in [LANGUAGE.md](LANGUAGE.md) — **module**, **interface**, **seam**, **adapter**.
+How to deepen a cluster of shallow modules safely, given its dependencies. Assumes the vocabulary in [SKILL.md](SKILL.md) — **module**, **interface**, **seam**, **adapter**.
 
 ## Dependency categories
 
@@ -33,6 +33,5 @@ Third-party services (Stripe, Twilio, etc.) you don't control. The deepened modu
 
 - Old unit tests on shallow modules become waste once tests at the deepened module's interface exist — delete them.
 - Write new tests at the deepened module's interface. The **interface is the test surface**.
-- If no useful interface or workflow boundary can prove the behavior, treat that as a Verification Surface problem to improve, not as a reason to keep shallow unit tests.
 - Tests assert on observable outcomes through the interface, not internal state.
 - Tests should survive internal refactors — they describe behaviour, not implementation. If a test has to change when the implementation changes, it's testing past the interface.
