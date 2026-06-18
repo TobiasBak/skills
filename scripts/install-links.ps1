@@ -4,11 +4,50 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$ManifestPath = Join-Path $RepoRoot "skills.json"
-$Manifest = Get-Content -Raw -Path $ManifestPath | ConvertFrom-Json
+$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $TargetDir = if ($env:PI_SKILLS_DIR) { $env:PI_SKILLS_DIR } else { Join-Path $HOME ".pi/agent/skills" }
 New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
+
+function Get-SkillSources {
+    $Sources = @()
+
+    $PersonalRoot = Join-Path $RepoRoot "skills"
+    if (Test-Path -LiteralPath $PersonalRoot) {
+        Get-ChildItem -Directory -LiteralPath $PersonalRoot | ForEach-Object {
+            if (Test-Path -LiteralPath (Join-Path $_.FullName "SKILL.md")) {
+                $Sources += [pscustomobject]@{
+                    Name = $_.Name
+                    Source = (Resolve-Path $_.FullName).Path
+                }
+            }
+        }
+    }
+
+    $ExternalRoot = Join-Path $RepoRoot "external"
+    if (Test-Path -LiteralPath $ExternalRoot) {
+        Get-ChildItem -Directory -LiteralPath $ExternalRoot | ForEach-Object {
+            Get-ChildItem -Directory -LiteralPath $_.FullName | ForEach-Object {
+                if (Test-Path -LiteralPath (Join-Path $_.FullName "SKILL.md")) {
+                    $Sources += [pscustomobject]@{
+                        Name = $_.Name
+                        Source = (Resolve-Path $_.FullName).Path
+                    }
+                }
+            }
+        }
+    }
+
+    $Duplicates = @($Sources | Group-Object Name | Where-Object { $_.Count -gt 1 })
+    if ($Duplicates.Count -gt 0) {
+        $Message = $Duplicates | ForEach-Object {
+            $Paths = $_.Group | ForEach-Object { $_.Source }
+            "Duplicate skill name '$($_.Name)': $($Paths -join ', ')"
+        }
+        throw ($Message -join "`n")
+    }
+
+    return @($Sources | Sort-Object Name)
+}
 
 function Get-LinkTarget($Path) {
     if (!(Test-Path -LiteralPath $Path)) { return $null }
@@ -32,7 +71,7 @@ function Assert-Or-LinkSkill($Name, $Source) {
             return
         }
         if (!$Fix) { throw "Wrong link target: $Target -> $ExistingTarget; expected $SourcePath. Re-run with -Fix." }
-        Remove-Item -LiteralPath $Target -Recurse -Force
+        Remove-Item -LiteralPath $Target -Force
     } elseif (Test-Path -LiteralPath $Target) {
         if (!$Fix) { throw "Exists but not link: $Target. Re-run with -Fix to replace." }
         Remove-Item -LiteralPath $Target -Recurse -Force
@@ -46,10 +85,30 @@ function Assert-Or-LinkSkill($Name, $Source) {
     Write-Host "Linked: $Target -> $SourcePath"
 }
 
-foreach ($Skill in $Manifest.external) {
-    Assert-Or-LinkSkill $Skill (Join-Path $RepoRoot "external/mattpocock-skills/$Skill")
+function Remove-StaleSkillLinks($Skills) {
+    $Expected = @{}
+    foreach ($Skill in $Skills) {
+        $Expected[$Skill.Name] = $true
+    }
+
+    Get-ChildItem -Force -LiteralPath $TargetDir | ForEach-Object {
+        if ($Expected.ContainsKey($_.Name)) { return }
+
+        if ($_.LinkType) {
+            if (!$Fix) { throw "Unexpected skill link: $($_.FullName). Re-run with -Fix to remove stale links." }
+            Remove-Item -LiteralPath $_.FullName -Force
+            Write-Host "Removed stale: $($_.FullName)"
+            return
+        }
+
+        if (!$Fix) { throw "Unexpected non-link in skills target: $($_.FullName)." }
+        Write-Warning "Leaving unexpected non-link in skills target: $($_.FullName)"
+    }
 }
 
-foreach ($Skill in $Manifest.personal) {
-    Assert-Or-LinkSkill $Skill (Join-Path $RepoRoot "skills/$Skill")
+$SkillSources = @(Get-SkillSources)
+foreach ($Skill in $SkillSources) {
+    Assert-Or-LinkSkill $Skill.Name $Skill.Source
 }
+
+Remove-StaleSkillLinks $SkillSources

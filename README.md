@@ -1,6 +1,6 @@
 # Skills
 
-Personal collection of reusable Pi coding-agent skills.
+Personal collection of reusable Pi and Codex CLI agent skills.
 
 ## Required tools
 
@@ -95,7 +95,7 @@ By default, skills are linked into:
 
 Override with `PI_SKILLS_DIR` if needed.
 
-The installer links skills listed in `skills.json`.
+The installer discovers every skill folder with a `SKILL.md` under `skills/*` and `external/*/*`. With `-Fix`, it also removes stale links from the target skill directory.
 
 On Windows, prefer PowerShell. Git Bash symlinks can be seen incorrectly by native Windows/Pi tools.
 
@@ -115,6 +115,6 @@ Verify links:
 
 Before adding a personal skill, identify the recurring model weakness, missing workflow discipline, or repeated tool-use habit it compensates for. If that target is vague, improve an existing skill or repo instruction instead.
 
-Create a skill directory under `skills/` with a `SKILL.md`, add the skill name to `skills.json`, then rerun the install script.
+Create a skill directory under `skills/` with a `SKILL.md`, then rerun the install script.
 
 Code-affecting skills must include a concise `Verification` section that names the expected verification surface, behavioral coverage guidance, and what to report if only partial verification is possible.

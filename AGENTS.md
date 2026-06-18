@@ -34,7 +34,7 @@ When a skill can shape implementation even indirectly, treat it as code-affectin
 
 - Personal skills live in `skills/<name>/`.
 - Vendored external skills live in `external/mattpocock-skills/<name>/`.
-- `skills.json` is the install manifest for both personal and external skills.
+- Skill install and verification scripts discover every skill folder with a `SKILL.md` under `skills/*` and `external/*/*`.
 - Installer and verification scripts live in `scripts/`.
 - Human setup and installation instructions belong in `README.md`.
 - Architectural decisions belong in `docs/adr/`.

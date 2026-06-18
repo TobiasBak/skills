@@ -7,7 +7,14 @@ TARGET_DIR="${PI_SKILLS_DIR:-$HOME/.pi/agent/skills}"
 # On Windows, Git Bash symlinks can appear as real dirs to native tools.
 # Delegate to PowerShell so Pi sees proper SymbolicLink/Junction entries.
 if [[ "${OS:-}" == "Windows_NT" ]] || uname -s | grep -qiE 'mingw|msys|cygwin'; then
-  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(cygpath -w "$REPO_ROOT/scripts/install-links.ps1")" "$@"
+  PS_ARGS=()
+  for arg in "$@"; do
+    case "$arg" in
+      --fix) PS_ARGS+=("-Fix") ;;
+      *) PS_ARGS+=("$arg") ;;
+    esac
+  done
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(cygpath -w "$REPO_ROOT/scripts/install-links.ps1")" "${PS_ARGS[@]}"
   exit $?
 fi
 
@@ -18,16 +25,28 @@ fi
 
 mkdir -p "$TARGET_DIR"
 
-mapfile -t EXTERNAL_SKILLS < <(uv run python - <<PY
-import json
-print(*json.load(open('$REPO_ROOT/skills.json'))['external'], sep='\n')
-PY
-)
-mapfile -t PERSONAL_SKILLS < <(uv run python - <<PY
-import json
-print(*json.load(open('$REPO_ROOT/skills.json'))['personal'], sep='\n')
-PY
-)
+discover_skill_sources() {
+  if [ -d "$REPO_ROOT/skills" ]; then
+    find "$REPO_ROOT/skills" -mindepth 2 -maxdepth 2 -type f -name SKILL.md -print
+  fi
+  if [ -d "$REPO_ROOT/external" ]; then
+    find "$REPO_ROOT/external" -mindepth 3 -maxdepth 3 -type f -name SKILL.md -print
+  fi
+}
+
+mapfile -t SKILL_SOURCES < <(discover_skill_sources | while IFS= read -r skill_file; do dirname "$skill_file"; done | sort)
+declare -A NAME_TO_SOURCE=()
+EXPECTED_NAMES=()
+
+for source in "${SKILL_SOURCES[@]}"; do
+  name="$(basename "$source")"
+  if [[ -n "${NAME_TO_SOURCE[$name]:-}" ]]; then
+    echo "Duplicate skill name '$name': ${NAME_TO_SOURCE[$name]}, $source" >&2
+    exit 1
+  fi
+  NAME_TO_SOURCE["$name"]="$source"
+  EXPECTED_NAMES+=("$name")
+done
 
 link_skill() {
   local name="$1"
@@ -40,9 +59,10 @@ link_skill() {
   fi
 
   if [ -L "$target" ]; then
-    local actual
-    actual="$(readlink "$target")"
-    if [ "$(cd "$(dirname "$actual")" 2>/dev/null && pwd)/$(basename "$actual")" = "$(cd "$source" && pwd)" ]; then
+    local actual expected
+    actual="$(realpath "$target" 2>/dev/null || true)"
+    expected="$(realpath "$source")"
+    if [ "$actual" = "$expected" ]; then
       echo "OK: $target -> $source"
       return
     fi
@@ -63,10 +83,41 @@ link_skill() {
   echo "Linked: $target -> $source"
 }
 
-for skill in "${EXTERNAL_SKILLS[@]}"; do
-  link_skill "$skill" "$REPO_ROOT/external/mattpocock-skills/$skill"
+remove_stale_skill_links() {
+  declare -A expected=()
+  for name in "${EXPECTED_NAMES[@]}"; do
+    expected["$name"]=1
+  done
+
+  shopt -s nullglob dotglob
+  for target in "$TARGET_DIR"/*; do
+    local name
+    name="$(basename "$target")"
+    if [[ -n "${expected[$name]:-}" ]]; then
+      continue
+    fi
+
+    if [ -L "$target" ]; then
+      if [ "$FIX" -ne 1 ]; then
+        echo "Unexpected skill link: $target. Re-run with --fix to remove stale links." >&2
+        exit 1
+      fi
+      rm "$target"
+      echo "Removed stale: $target"
+      continue
+    fi
+
+    if [ "$FIX" -ne 1 ]; then
+      echo "Unexpected non-link in skills target: $target" >&2
+      exit 1
+    fi
+    echo "Leaving unexpected non-link in skills target: $target" >&2
+  done
+  shopt -u nullglob dotglob
+}
+
+for skill in "${EXPECTED_NAMES[@]}"; do
+  link_skill "$skill" "${NAME_TO_SOURCE[$skill]}"
 done
 
-for skill in "${PERSONAL_SKILLS[@]}"; do
-  link_skill "$skill" "$REPO_ROOT/skills/$skill"
-done
+remove_stale_skill_links
