@@ -22,16 +22,17 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills "$TMP/repo"
-git -C "$TMP/repo" sparse-checkout set --no-cone /README.md
+git -C "$TMP/repo" sparse-checkout set --no-cone '/skills/engineering/*' '/skills/productivity/*'
 
 mapfile -t UPSTREAM_SKILL_DIRS < <(
-  grep -oE '\./skills/(engineering|productivity)/[^/)]+/SKILL\.md' "$TMP/repo/README.md" |
-    sed -E 's#^\./##; s#/SKILL\.md$##' |
+  find "$TMP/repo/skills/engineering" "$TMP/repo/skills/productivity" \
+    -mindepth 2 -maxdepth 2 -type f -name SKILL.md -printf '%h\n' |
+    sed "s#^$TMP/repo/##" |
     sort -u
 )
 
 if [ "${#UPSTREAM_SKILL_DIRS[@]}" -eq 0 ]; then
-  echo "No README-listed engineering or productivity skills found upstream." >&2
+  echo "No engineering or productivity skills found upstream." >&2
   exit 1
 fi
 
@@ -74,19 +75,13 @@ if [ "${#MANAGED_SKILL_PATHS[@]}" -gt 0 ]; then
   fi
 fi
 
-SPARSE_PATHS=(/README.md)
-for upstream_dir in "${UPSTREAM_SKILL_DIRS[@]}"; do
-  SPARSE_PATHS+=("/$upstream_dir")
-done
-git -C "$TMP/repo" sparse-checkout set --no-cone "${SPARSE_PATHS[@]}"
-
 find "$DEST" -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
 
 for name in "${SKILL_NAMES[@]}"; do
   cp -R "$TMP/repo/${NAME_TO_UPSTREAM[$name]}" "$DEST/$name"
 done
 
-echo "Updated ${#SKILL_NAMES[@]} Matt Pocock skills in $DEST"
+echo "Updated ${#SKILL_NAMES[@]} Matt Pocock engineering and productivity skills in $DEST"
 echo
 echo "Review vendored skill changes before committing:"
 git -C "$REPO_ROOT" status --short -- external/mattpocock-skills

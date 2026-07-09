@@ -12,25 +12,26 @@ try {
     git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills (Join-Path $Tmp "repo")
     $UpstreamRepo = Join-Path $Tmp "repo"
 
-    git -C $UpstreamRepo sparse-checkout set --no-cone /README.md
-    $Readme = Get-Content -Raw -LiteralPath (Join-Path $UpstreamRepo "README.md")
-    $SkillSources = @(
-        [regex]::Matches($Readme, '\./skills/(engineering|productivity)/[^/)]+/SKILL\.md') |
-            ForEach-Object {
-                $_.Value -replace '^\./', '' -replace '/SKILL\.md$', ''
-            } |
-            Sort-Object -Unique |
-            ForEach-Object {
+    git -C $UpstreamRepo sparse-checkout set --no-cone /skills/engineering/* /skills/productivity/*
+    $SkillRoots = @("skills/engineering", "skills/productivity")
+    $SkillSources = foreach ($SkillRoot in $SkillRoots) {
+        $RootPath = Join-Path $UpstreamRepo $SkillRoot
+        if (Test-Path -LiteralPath $RootPath) {
+            Get-ChildItem -Directory -LiteralPath $RootPath | Where-Object {
+                Test-Path -LiteralPath (Join-Path $_.FullName "SKILL.md")
+            } | ForEach-Object {
                 [pscustomobject]@{
-                    Name = Split-Path -Leaf $_
-                    UpstreamPath = $_
-                    RepoPath = "external/mattpocock-skills/$(Split-Path -Leaf $_)"
+                    Name = $_.Name
+                    UpstreamPath = "$SkillRoot/$($_.Name)"
+                    RepoPath = "external/mattpocock-skills/$($_.Name)"
                 }
             }
-    )
+        }
+    }
+    $SkillSources = @($SkillSources | Sort-Object Name)
 
     if ($SkillSources.Count -eq 0) {
-        Write-Error "No README-listed engineering or productivity skills found upstream."
+        Write-Error "No engineering or productivity skills found upstream."
     }
 
     $Duplicates = @($SkillSources | Group-Object Name | Where-Object { $_.Count -gt 1 })
@@ -59,9 +60,6 @@ try {
         }
     }
 
-    $SparsePaths = @("/README.md") + @($SkillSources | ForEach-Object { "/$($_.UpstreamPath)" })
-    git -C $UpstreamRepo sparse-checkout set --no-cone $SparsePaths
-
     Get-ChildItem -Directory -LiteralPath $Dest | ForEach-Object {
         Remove-Item -Recurse -Force -LiteralPath $_.FullName
     }
@@ -70,7 +68,7 @@ try {
         Copy-Item -Recurse -LiteralPath (Join-Path $UpstreamRepo $_.UpstreamPath) -Destination (Join-Path $Dest $_.Name)
     }
 
-    Write-Host "Updated $($SkillSources.Count) Matt Pocock skills in $Dest"
+    Write-Host "Updated $($SkillSources.Count) Matt Pocock engineering and productivity skills in $Dest"
     Write-Host ""
     Write-Host "Review vendored skill changes before committing:"
     git -C $RepoRoot status --short -- external/mattpocock-skills

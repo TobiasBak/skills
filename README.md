@@ -26,13 +26,13 @@ Use whichever terminal you prefer. The repo provides both Bash and PowerShell sc
 
 ## External skills
 
-README-listed engineering and productivity skills from:
+Engineering and productivity skills from:
 
 - https://github.com/mattpocock/skills
 
-The updater copies every skill linked from Matt Pocock's upstream README under `skills/engineering` and `skills/productivity`. It intentionally excludes upstream `deprecated`, `in-progress`, `misc`, and `personal` skills.
+The updater copies every skill folder under Matt Pocock's upstream `skills/engineering` and `skills/productivity` directories. It intentionally excludes upstream `deprecated`, `in-progress`, `misc`, and `personal` skills.
 
-Currently vendored from those README sections:
+Currently vendored from those upstream folders:
 
 - `ask-matt`
 - `code-review`
@@ -47,6 +47,7 @@ Currently vendored from those README sections:
 - `improve-codebase-architecture`
 - `prototype`
 - `research`
+- `resolving-merge-conflicts`
 - `setup-matt-pocock-skills`
 - `tdd`
 - `teach`
@@ -72,7 +73,7 @@ PowerShell:
 ./external/mattpocock-skills/update.ps1
 ```
 
-The update script temporarily sparse-clones the upstream repo, discovers README-listed `engineering` and `productivity` skill links, copies those skill folders, removes local Matt Pocock skill folders that no longer match that set, then deletes the temporary clone.
+The update script temporarily sparse-clones the upstream repo, discovers skill folders under `skills/engineering` and `skills/productivity`, copies those skill folders, removes local Matt Pocock skill folders that no longer match that set, then deletes the temporary clone.
 
 The updater refuses to overwrite uncommitted local changes in selected vendored skill folders. Review or commit local changes first, or force the update only when you intentionally want to overwrite them:
 
