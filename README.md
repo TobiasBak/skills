@@ -26,24 +26,37 @@ Use whichever terminal you prefer. The repo provides both Bash and PowerShell sc
 
 ## External skills
 
-Selected public skills from:
+README-listed engineering and productivity skills from:
 
 - https://github.com/mattpocock/skills
 
-Currently vendored:
+The updater copies every skill linked from Matt Pocock's upstream README under `skills/engineering` and `skills/productivity`. It intentionally excludes upstream `deprecated`, `in-progress`, `misc`, and `personal` skills.
 
-- `diagnosing-bugs`
-- `tdd`
-- `domain-modeling`
+Currently vendored from those README sections:
+
+- `ask-matt`
+- `code-review`
 - `codebase-design`
-- `handoff`
-- `writing-great-skills`
-- `grilling`
+- `diagnosing-bugs`
+- `domain-modeling`
+- `grill-me`
 - `grill-with-docs`
+- `grilling`
+- `handoff`
+- `implement`
 - `improve-codebase-architecture`
-- `to-prd`
+- `prototype`
+- `research`
+- `setup-matt-pocock-skills`
+- `tdd`
+- `teach`
+- `to-spec`
+- `to-tickets`
+- `triage`
+- `wayfinder`
+- `writing-great-skills`
 
-Only the selected skill folders are kept. Root upstream files like `CLAUDE.md`, `CONTEXT.md`, and the upstream `README.md` are intentionally excluded.
+Only those skill folders are kept. Root upstream files like `CLAUDE.md`, `CONTEXT.md`, and the upstream `README.md` are intentionally excluded.
 
 ## Updating Matt Pocock skills
 
@@ -59,7 +72,7 @@ PowerShell:
 ./external/mattpocock-skills/update.ps1
 ```
 
-The update script temporarily sparse-clones the upstream repo, copies only the selected skill folders, then deletes the temporary clone.
+The update script temporarily sparse-clones the upstream repo, discovers README-listed `engineering` and `productivity` skill links, copies those skill folders, removes local Matt Pocock skill folders that no longer match that set, then deletes the temporary clone.
 
 The updater refuses to overwrite uncommitted local changes in selected vendored skill folders. Review or commit local changes first, or force the update only when you intentionally want to overwrite them:
 

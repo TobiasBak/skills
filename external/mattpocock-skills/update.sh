@@ -21,59 +21,73 @@ REPO_ROOT="$(cd "$DEST/../.." && pwd)"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-MANAGED_SKILL_PATHS=(
-  "external/mattpocock-skills/diagnosing-bugs"
-  "external/mattpocock-skills/tdd"
-  "external/mattpocock-skills/domain-modeling"
-  "external/mattpocock-skills/codebase-design"
-  "external/mattpocock-skills/handoff"
-  "external/mattpocock-skills/writing-great-skills"
-  "external/mattpocock-skills/grilling"
-  "external/mattpocock-skills/grill-with-docs"
-  "external/mattpocock-skills/improve-codebase-architecture"
-  "external/mattpocock-skills/to-prd"
-  "external/mattpocock-skills/write-a-skill"
+git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills "$TMP/repo"
+git -C "$TMP/repo" sparse-checkout set --no-cone /README.md
+
+mapfile -t UPSTREAM_SKILL_DIRS < <(
+  grep -oE '\./skills/(engineering|productivity)/[^/)]+/SKILL\.md' "$TMP/repo/README.md" |
+    sed -E 's#^\./##; s#/SKILL\.md$##' |
+    sort -u
 )
 
-PENDING_CHANGES="$(git -C "$REPO_ROOT" status --short -- "${MANAGED_SKILL_PATHS[@]}")"
-if [ -n "$PENDING_CHANGES" ] && [ "$FORCE" -ne 1 ]; then
-  echo "Refusing to overwrite vendored skills with uncommitted local changes:" >&2
-  echo "$PENDING_CHANGES" >&2
-  echo "Review or commit these changes, then rerun. Use --force only when you intentionally want to overwrite them." >&2
+if [ "${#UPSTREAM_SKILL_DIRS[@]}" -eq 0 ]; then
+  echo "No README-listed engineering or productivity skills found upstream." >&2
   exit 1
 fi
 
-git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills "$TMP/repo"
-cd "$TMP/repo"
-git sparse-checkout set --no-cone \
-  skills/productivity/handoff \
-  skills/productivity/writing-great-skills \
-  skills/productivity/grilling \
-  skills/engineering/diagnosing-bugs \
-  skills/engineering/tdd \
-  skills/engineering/domain-modeling \
-  skills/engineering/codebase-design \
-  skills/engineering/grill-with-docs \
-  skills/engineering/improve-codebase-architecture \
-  skills/engineering/to-prd
-
-for skill in diagnosing-bugs tdd domain-modeling codebase-design handoff writing-great-skills grilling grill-with-docs improve-codebase-architecture to-prd grill-me write-a-skill; do
-  rm -rf "$DEST/$skill"
+declare -A NAME_TO_UPSTREAM=()
+for upstream_dir in "${UPSTREAM_SKILL_DIRS[@]}"; do
+  name="$(basename "$upstream_dir")"
+  if [[ -n "${NAME_TO_UPSTREAM[$name]:-}" ]]; then
+    echo "Duplicate upstream skill name '$name': ${NAME_TO_UPSTREAM[$name]}, $upstream_dir" >&2
+    exit 1
+  fi
+  NAME_TO_UPSTREAM["$name"]="$upstream_dir"
 done
 
-cp -R skills/productivity/handoff "$DEST/handoff"
-cp -R skills/productivity/writing-great-skills "$DEST/writing-great-skills"
-cp -R skills/productivity/grilling "$DEST/grilling"
-cp -R skills/engineering/diagnosing-bugs "$DEST/diagnosing-bugs"
-cp -R skills/engineering/tdd "$DEST/tdd"
-cp -R skills/engineering/domain-modeling "$DEST/domain-modeling"
-cp -R skills/engineering/codebase-design "$DEST/codebase-design"
-cp -R skills/engineering/grill-with-docs "$DEST/grill-with-docs"
-cp -R skills/engineering/improve-codebase-architecture "$DEST/improve-codebase-architecture"
-cp -R skills/engineering/to-prd "$DEST/to-prd"
+mapfile -t SKILL_NAMES < <(printf '%s\n' "${!NAME_TO_UPSTREAM[@]}" | sort)
 
-echo "Updated Matt Pocock skills in $DEST"
+CURRENT_SKILL_PATHS=()
+while IFS= read -r -d '' skill_dir; do
+  CURRENT_SKILL_PATHS+=("external/mattpocock-skills/$(basename "$skill_dir")")
+done < <(find "$DEST" -mindepth 1 -maxdepth 1 -type d -print0)
+
+TARGET_SKILL_PATHS=()
+for name in "${SKILL_NAMES[@]}"; do
+  TARGET_SKILL_PATHS+=("external/mattpocock-skills/$name")
+done
+
+mapfile -t MANAGED_SKILL_PATHS < <(
+  {
+    printf '%s\n' "${CURRENT_SKILL_PATHS[@]}"
+    printf '%s\n' "${TARGET_SKILL_PATHS[@]}"
+  } | sed '/^$/d' | sort -u
+)
+
+if [ "${#MANAGED_SKILL_PATHS[@]}" -gt 0 ]; then
+  PENDING_CHANGES="$(git -C "$REPO_ROOT" status --short -- "${MANAGED_SKILL_PATHS[@]}")"
+  if [ -n "$PENDING_CHANGES" ] && [ "$FORCE" -ne 1 ]; then
+    echo "Refusing to overwrite vendored skills with uncommitted local changes:" >&2
+    echo "$PENDING_CHANGES" >&2
+    echo "Review or commit these changes, then rerun. Use --force only when you intentionally want to overwrite them." >&2
+    exit 1
+  fi
+fi
+
+SPARSE_PATHS=(/README.md)
+for upstream_dir in "${UPSTREAM_SKILL_DIRS[@]}"; do
+  SPARSE_PATHS+=("/$upstream_dir")
+done
+git -C "$TMP/repo" sparse-checkout set --no-cone "${SPARSE_PATHS[@]}"
+
+find "$DEST" -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
+
+for name in "${SKILL_NAMES[@]}"; do
+  cp -R "$TMP/repo/${NAME_TO_UPSTREAM[$name]}" "$DEST/$name"
+done
+
+echo "Updated ${#SKILL_NAMES[@]} Matt Pocock skills in $DEST"
 echo
 echo "Review vendored skill changes before committing:"
-git -C "$REPO_ROOT" status --short -- "${MANAGED_SKILL_PATHS[@]}"
-git -C "$REPO_ROOT" --no-pager diff -- "${MANAGED_SKILL_PATHS[@]}"
+git -C "$REPO_ROOT" status --short -- external/mattpocock-skills
+git -C "$REPO_ROOT" --no-pager diff -- external/mattpocock-skills
