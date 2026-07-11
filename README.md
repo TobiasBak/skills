@@ -30,11 +30,10 @@ Engineering and productivity skills from:
 
 - https://github.com/mattpocock/skills
 
-The updater copies every skill folder under Matt Pocock's upstream `skills/engineering` and `skills/productivity` directories. It intentionally excludes upstream `deprecated`, `in-progress`, `misc`, and `personal` skills.
+The updater copies selected skill folders under Matt Pocock's upstream `skills/engineering` and `skills/productivity` directories. It excludes `ask-matt`, `resolving-merge-conflicts`, and `setup-matt-pocock-skills`, plus upstream `deprecated`, `in-progress`, `misc`, and `personal` skills.
 
 Currently vendored from those upstream folders:
 
-- `ask-matt`
 - `code-review`
 - `codebase-design`
 - `diagnosing-bugs`
@@ -47,8 +46,6 @@ Currently vendored from those upstream folders:
 - `improve-codebase-architecture`
 - `prototype`
 - `research`
-- `resolving-merge-conflicts`
-- `setup-matt-pocock-skills`
 - `tdd`
 - `teach`
 - `to-spec`

@@ -3,6 +3,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$ExcludedSkillNames = @(
+    "ask-matt",
+    "resolving-merge-conflicts",
+    "setup-matt-pocock-skills"
+)
 
 $Dest = Resolve-Path $PSScriptRoot
 $RepoRoot = (Resolve-Path (Join-Path $Dest "../..")).Path
@@ -18,7 +23,8 @@ try {
         $RootPath = Join-Path $UpstreamRepo $SkillRoot
         if (Test-Path -LiteralPath $RootPath) {
             Get-ChildItem -Directory -LiteralPath $RootPath | Where-Object {
-                Test-Path -LiteralPath (Join-Path $_.FullName "SKILL.md")
+                $_.Name -notin $ExcludedSkillNames -and
+                (Test-Path -LiteralPath (Join-Path $_.FullName "SKILL.md"))
             } | ForEach-Object {
                 [pscustomobject]@{
                     Name = $_.Name

@@ -39,6 +39,9 @@ fi
 declare -A NAME_TO_UPSTREAM=()
 for upstream_dir in "${UPSTREAM_SKILL_DIRS[@]}"; do
   name="$(basename "$upstream_dir")"
+  case "$name" in
+    ask-matt|resolving-merge-conflicts|setup-matt-pocock-skills) continue ;;
+  esac
   if [[ -n "${NAME_TO_UPSTREAM[$name]:-}" ]]; then
     echo "Duplicate upstream skill name '$name': ${NAME_TO_UPSTREAM[$name]}, $upstream_dir" >&2
     exit 1
