@@ -3,6 +3,14 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET_DIR="${PI_SKILLS_DIR:-$HOME/.pi/agent/skills}"
+declare -A EXCLUDED_SKILLS=()
+IFS=',' read -ra EXCLUDED_NAMES <<< "${SKILLS_EXCLUDE:-}"
+for excluded_name in "${EXCLUDED_NAMES[@]}"; do
+  excluded_name="${excluded_name//[[:space:]]/}"
+  if [ -n "$excluded_name" ]; then
+    EXCLUDED_SKILLS["$excluded_name"]=1
+  fi
+done
 
 # On Windows, Git Bash symlinks can appear as real dirs to native tools.
 # Delegate to PowerShell so Pi sees proper SymbolicLink/Junction entries.
@@ -40,6 +48,9 @@ EXPECTED_NAMES=()
 
 for source in "${SKILL_SOURCES[@]}"; do
   name="$(basename "$source")"
+  if [[ -n "${EXCLUDED_SKILLS[$name]:-}" ]]; then
+    continue
+  fi
   if [[ -n "${NAME_TO_SOURCE[$name]:-}" ]]; then
     echo "Duplicate skill name '$name': ${NAME_TO_SOURCE[$name]}, $source" >&2
     exit 1
@@ -98,20 +109,28 @@ remove_stale_skill_links() {
     fi
 
     if [ -L "$target" ]; then
-      if [ "$FIX" -ne 1 ]; then
-        echo "Unexpected skill link: $target. Re-run with --fix to remove stale links." >&2
-        exit 1
+      local link_target
+      link_target="$(readlink "$target")"
+      if [[ "$link_target" != /* ]]; then
+        link_target="$(realpath -m "$(dirname "$target")/$link_target")"
       fi
-      rm "$target"
-      echo "Removed stale: $target"
+      case "$link_target" in
+        "$REPO_ROOT/skills/"*|"$REPO_ROOT/external/"*)
+          if [ "$FIX" -ne 1 ]; then
+            echo "Stale managed skill link: $target. Re-run with --fix to remove it." >&2
+            exit 1
+          fi
+          rm "$target"
+          echo "Removed stale: $target"
+          ;;
+        *)
+          echo "Leaving unmanaged skill link: $target"
+          ;;
+      esac
       continue
     fi
 
-    if [ "$FIX" -ne 1 ]; then
-      echo "Unexpected non-link in skills target: $target" >&2
-      exit 1
-    fi
-    echo "Leaving unexpected non-link in skills target: $target" >&2
+    echo "Leaving unmanaged entry: $target"
   done
   shopt -u nullglob dotglob
 }

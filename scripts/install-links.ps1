@@ -6,6 +6,13 @@ $ErrorActionPreference = "Stop"
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $TargetDir = if ($env:PI_SKILLS_DIR) { $env:PI_SKILLS_DIR } else { Join-Path $HOME ".pi/agent/skills" }
+$ExcludedSkills = @{}
+if ($env:SKILLS_EXCLUDE) {
+    $env:SKILLS_EXCLUDE -split "," | ForEach-Object {
+        $Name = $_.Trim()
+        if ($Name) { $ExcludedSkills[$Name] = $true }
+    }
+}
 New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
 
 function Get-SkillSources {
@@ -36,6 +43,8 @@ function Get-SkillSources {
             }
         }
     }
+
+    $Sources = @($Sources | Where-Object { !$ExcludedSkills.ContainsKey($_.Name) })
 
     $Duplicates = @($Sources | Group-Object Name | Where-Object { $_.Count -gt 1 })
     if ($Duplicates.Count -gt 0) {
@@ -85,6 +94,26 @@ function Assert-Or-LinkSkill($Name, $Source) {
     Write-Host "Linked: $Target -> $SourcePath"
 }
 
+function Test-ManagedSkillLink($Item) {
+    if (!$Item.LinkType) { return $false }
+    $RawTarget = ($Item.Target -join ";")
+    $Target = if ([System.IO.Path]::IsPathRooted($RawTarget)) {
+        [System.IO.Path]::GetFullPath($RawTarget)
+    } else {
+        [System.IO.Path]::GetFullPath((Join-Path $Item.DirectoryName $RawTarget))
+    }
+    $ManagedRoots = @(
+        [System.IO.Path]::GetFullPath((Join-Path $RepoRoot "skills")),
+        [System.IO.Path]::GetFullPath((Join-Path $RepoRoot "external"))
+    )
+    foreach ($Root in $ManagedRoots) {
+        if ($Target.StartsWith($Root + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+    return $false
+}
+
 function Remove-StaleSkillLinks($Skills) {
     $Expected = @{}
     foreach ($Skill in $Skills) {
@@ -94,15 +123,14 @@ function Remove-StaleSkillLinks($Skills) {
     Get-ChildItem -Force -LiteralPath $TargetDir | ForEach-Object {
         if ($Expected.ContainsKey($_.Name)) { return }
 
-        if ($_.LinkType) {
-            if (!$Fix) { throw "Unexpected skill link: $($_.FullName). Re-run with -Fix to remove stale links." }
+        if (Test-ManagedSkillLink $_) {
+            if (!$Fix) { throw "Stale managed skill link: $($_.FullName). Re-run with -Fix to remove it." }
             Remove-Item -LiteralPath $_.FullName -Force
             Write-Host "Removed stale: $($_.FullName)"
             return
         }
 
-        if (!$Fix) { throw "Unexpected non-link in skills target: $($_.FullName)." }
-        Write-Warning "Leaving unexpected non-link in skills target: $($_.FullName)"
+        Write-Host "Leaving unmanaged entry: $($_.FullName)"
     }
 }
 

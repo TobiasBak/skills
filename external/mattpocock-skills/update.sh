@@ -52,9 +52,10 @@ done
 mapfile -t SKILL_NAMES < <(printf '%s\n' "${!NAME_TO_UPSTREAM[@]}" | sort)
 
 CURRENT_SKILL_PATHS=()
-while IFS= read -r -d '' skill_dir; do
+while IFS= read -r -d '' skill_file; do
+  skill_dir="$(dirname "$skill_file")"
   CURRENT_SKILL_PATHS+=("external/mattpocock-skills/$(basename "$skill_dir")")
-done < <(find "$DEST" -mindepth 1 -maxdepth 1 -type d -print0)
+done < <(find "$DEST" -mindepth 2 -maxdepth 2 -type f -name SKILL.md -print0)
 
 TARGET_SKILL_PATHS=()
 for name in "${SKILL_NAMES[@]}"; do
@@ -78,11 +79,37 @@ if [ "${#MANAGED_SKILL_PATHS[@]}" -gt 0 ]; then
   fi
 fi
 
-find "$DEST" -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
+PRESERVED_METADATA="$TMP/preserved-openai-metadata"
+for name in "${SKILL_NAMES[@]}"; do
+  metadata="$DEST/$name/agents/openai.yaml"
+  if [ -f "$metadata" ]; then
+    mkdir -p "$PRESERVED_METADATA/$name"
+    cp "$metadata" "$PRESERVED_METADATA/$name/openai.yaml"
+  fi
+done
+
+for managed_path in "${MANAGED_SKILL_PATHS[@]}"; do
+  rm -rf "$REPO_ROOT/$managed_path"
+done
 
 for name in "${SKILL_NAMES[@]}"; do
   cp -R "$TMP/repo/${NAME_TO_UPSTREAM[$name]}" "$DEST/$name"
+  if [ ! -f "$DEST/$name/agents/openai.yaml" ] && [ -f "$PRESERVED_METADATA/$name/openai.yaml" ]; then
+    mkdir -p "$DEST/$name/agents"
+    cp "$PRESERVED_METADATA/$name/openai.yaml" "$DEST/$name/agents/openai.yaml"
+  fi
 done
+
+WRITING_PATCH="$DEST/patches/pr-522-writing-great-skills.patch"
+WRITING_SKILL="$DEST/writing-great-skills/SKILL.md"
+if ! grep -q 'policy.allow_implicit_invocation: false' "$WRITING_SKILL"; then
+  if git -C "$REPO_ROOT" apply --unidiff-zero --check "$WRITING_PATCH"; then
+    git -C "$REPO_ROOT" apply --unidiff-zero "$WRITING_PATCH"
+  else
+    echo "Unable to reapply $WRITING_PATCH after the upstream refresh." >&2
+    exit 1
+  fi
+fi
 
 echo "Updated ${#SKILL_NAMES[@]} Matt Pocock engineering and productivity skills in $DEST"
 echo

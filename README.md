@@ -1,6 +1,6 @@
 # Skills
 
-Personal collection of reusable Pi and Codex CLI agent skills.
+Personal collection of reusable agent skills for Pi, Codex, and the ChatGPT desktop app.
 
 ## Required tools
 
@@ -25,6 +25,8 @@ winget install --id astral-sh.uv --exact
 Use whichever terminal you prefer. The repo provides both Bash and PowerShell script entry points where useful, but shell choice is not a repository requirement.
 
 ## External skills
+
+### Matt Pocock skills
 
 Engineering and productivity skills from:
 
@@ -61,7 +63,7 @@ Only those skill folders are kept. Root upstream files like `CLAUDE.md`, `CONTEX
 Bash:
 
 ```bash
-./external/mattpocock-skills/update.sh
+bash ./external/mattpocock-skills/update.sh
 ```
 
 PowerShell:
@@ -70,12 +72,12 @@ PowerShell:
 ./external/mattpocock-skills/update.ps1
 ```
 
-The update script temporarily sparse-clones the upstream repo, discovers skill folders under `skills/engineering` and `skills/productivity`, copies those skill folders, removes local Matt Pocock skill folders that no longer match that set, then deletes the temporary clone.
+The update script temporarily sparse-clones the upstream repo, discovers skill folders under `skills/engineering` and `skills/productivity`, copies those skill folders, removes local Matt Pocock skill folders that no longer match that set, then deletes the temporary clone. Until PR 522 lands upstream, it preserves local `agents/openai.yaml` files when upstream has no corresponding metadata and reapplies the scoped writing guidance from `external/mattpocock-skills/patches/`. Once upstream supplies metadata or equivalent dual-harness guidance, the upstream files win.
 
 The updater refuses to overwrite uncommitted local changes in selected vendored skill folders. Review or commit local changes first, or force the update only when you intentionally want to overwrite them:
 
 ```bash
-./external/mattpocock-skills/update.sh --force
+bash ./external/mattpocock-skills/update.sh --force
 ```
 
 ```powershell
@@ -84,29 +86,57 @@ The updater refuses to overwrite uncommitted local changes in selected vendored 
 
 After updating, review the printed `git diff` before committing the vendored changes.
 
-## Installing skills into Pi
+### OpenAI Docs skill
 
-Bash:
+The official OpenAI Docs skill is vendored from:
+
+- https://github.com/openai/skills/tree/main/skills/.curated/openai-docs
+
+It lives at `external/openai-skills/openai-docs` and includes its upstream license, references, scripts, agents, and assets.
+
+Update it with:
 
 ```bash
-./scripts/install-links.sh
+./external/openai-skills/update.sh
 ```
 
-PowerShell:
+```powershell
+./external/openai-skills/update.ps1
+```
+
+The updater refuses to overwrite uncommitted changes in the vendored skill. Review or commit them first, or use `--force` / `-Force` only when intentionally replacing them with upstream.
+
+After updating, review the printed `git diff` before committing.
+
+## Installing skills into Pi and Codex
+
+By default, the installer links skills into Pi at `~/.pi/agent/skills`:
+
+```bash
+bash ./scripts/install-links.sh
+```
 
 ```powershell
 ./scripts/install-links.ps1
 ```
 
-By default, skills are linked into:
+Install skills into Codex at `~/.agents/skills` by overriding `PI_SKILLS_DIR`. Exclude `openai-docs` because current Codex releases already bundle that skill; installing this vendored copy as well creates a duplicate model-visible entry.
 
-```text
-~/.pi/agent/skills
+```bash
+PI_SKILLS_DIR="$HOME/.agents/skills" SKILLS_EXCLUDE="openai-docs" bash ./scripts/install-links.sh --fix
 ```
 
-Override with `PI_SKILLS_DIR` if needed.
+```powershell
+$env:PI_SKILLS_DIR = Join-Path $HOME ".agents/skills"
+$env:SKILLS_EXCLUDE = "openai-docs"
+./scripts/install-links.ps1 -Fix
+```
 
-The installer discovers every skill folder with a `SKILL.md` under `skills/*` and `external/*/*`. With `-Fix`, it also removes stale links from the target skill directory.
+Use `PI_SKILLS_DIR` similarly for any alternate target directory. `SKILLS_EXCLUDE` accepts a comma-separated list of skill names that should not be linked. Apply the same value when running `verify-links.ps1` against a filtered target.
+
+Pi also scans `~/.agents/skills`. When both global locations contain a skill with the same name, Pi warns and keeps only the first entry; it does not put both descriptions in model context.
+
+The installer discovers every skill folder with a `SKILL.md` under `skills/*` and `external/*/*`. It links the complete folders, including OpenAI-specific `agents/openai.yaml` metadata used by Codex and the ChatGPT desktop app. Pi reads the portable `SKILL.md` instructions and ignores this additive metadata. With `-Fix`, the installer also removes stale links from the target skill directory.
 
 On Windows, prefer PowerShell. Git Bash symlinks can be seen incorrectly by native Windows/Pi tools.
 
@@ -126,6 +156,6 @@ Verify links:
 
 Before adding a personal skill, identify the recurring model weakness, missing workflow discipline, or repeated tool-use habit it compensates for. If that target is vague, improve an existing skill or repo instruction instead.
 
-Create a skill directory under `skills/` with a `SKILL.md`, then rerun the install script.
+Create a skill directory under `skills/` with a `SKILL.md` and `agents/openai.yaml`, then rerun the install script. Keep discovery triggers in `SKILL.md.description`; use OpenAI metadata for the display name, short UI description, and a one-sentence starter prompt that explicitly mentions `$skill-name`. If `SKILL.md` sets `disable-model-invocation: true`, also set `policy.allow_implicit_invocation: false` in `agents/openai.yaml`.
 
 Code-affecting skills must include a concise `Verification` section that names the expected verification surface, behavioral coverage guidance, and what to report if only partial verification is possible.

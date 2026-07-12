@@ -2,6 +2,13 @@ $ErrorActionPreference = "Stop"
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $TargetDir = if ($env:PI_SKILLS_DIR) { $env:PI_SKILLS_DIR } else { Join-Path $HOME ".pi/agent/skills" }
+$ExcludedSkills = @{}
+if ($env:SKILLS_EXCLUDE) {
+    $env:SKILLS_EXCLUDE -split "," | ForEach-Object {
+        $Name = $_.Trim()
+        if ($Name) { $ExcludedSkills[$Name] = $true }
+    }
+}
 $Failures = @()
 
 function Get-SkillSources {
@@ -32,6 +39,8 @@ function Get-SkillSources {
             }
         }
     }
+
+    $Sources = @($Sources | Where-Object { !$ExcludedSkills.ContainsKey($_.Name) })
 
     $Duplicates = @($Sources | Group-Object Name | Where-Object { $_.Count -gt 1 })
     if ($Duplicates.Count -gt 0) {
@@ -64,6 +73,26 @@ function Test-SkillLink($Name, $Source) {
     Write-Host "OK: $Target -> $Expected"
 }
 
+function Test-ManagedSkillLink($Item) {
+    if (!$Item.LinkType) { return $false }
+    $RawTarget = ($Item.Target -join ";")
+    $Target = if ([System.IO.Path]::IsPathRooted($RawTarget)) {
+        [System.IO.Path]::GetFullPath($RawTarget)
+    } else {
+        [System.IO.Path]::GetFullPath((Join-Path $Item.DirectoryName $RawTarget))
+    }
+    $ManagedRoots = @(
+        [System.IO.Path]::GetFullPath((Join-Path $RepoRoot "skills")),
+        [System.IO.Path]::GetFullPath((Join-Path $RepoRoot "external"))
+    )
+    foreach ($Root in $ManagedRoots) {
+        if ($Target.StartsWith($Root + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+    return $false
+}
+
 function Test-NoStaleSkillLinks($Skills) {
     $Expected = @{}
     foreach ($Skill in $Skills) {
@@ -75,8 +104,8 @@ function Test-NoStaleSkillLinks($Skills) {
     }
 
     Get-ChildItem -Force -LiteralPath $TargetDir | ForEach-Object {
-        if (!$Expected.ContainsKey($_.Name)) {
-            $script:Failures += "Unexpected: $($_.FullName) (not discovered from $RepoRoot)"
+        if (!$Expected.ContainsKey($_.Name) -and (Test-ManagedSkillLink $_)) {
+            $script:Failures += "Stale managed link: $($_.FullName) (no longer discovered from $RepoRoot)"
         }
     }
 }

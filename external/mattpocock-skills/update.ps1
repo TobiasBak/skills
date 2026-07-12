@@ -50,7 +50,9 @@ try {
     }
 
     $CurrentSkillPaths = @(
-        Get-ChildItem -Directory -LiteralPath $Dest | ForEach-Object {
+        Get-ChildItem -Directory -LiteralPath $Dest | Where-Object {
+            Test-Path -LiteralPath (Join-Path $_.FullName "SKILL.md")
+        } | ForEach-Object {
             "external/mattpocock-skills/$($_.Name)"
         }
     )
@@ -66,12 +68,45 @@ try {
         }
     }
 
-    Get-ChildItem -Directory -LiteralPath $Dest | ForEach-Object {
-        Remove-Item -Recurse -Force -LiteralPath $_.FullName
+    $PreservedMetadata = Join-Path $Tmp "preserved-openai-metadata"
+    $SkillSources | ForEach-Object {
+        $Metadata = Join-Path $Dest "$($_.Name)/agents/openai.yaml"
+        if (Test-Path -LiteralPath $Metadata) {
+            $PreservedSkill = Join-Path $PreservedMetadata $_.Name
+            New-Item -ItemType Directory -Force -Path $PreservedSkill | Out-Null
+            Copy-Item -LiteralPath $Metadata -Destination (Join-Path $PreservedSkill "openai.yaml")
+        }
+    }
+
+    $ManagedSkillPaths | ForEach-Object {
+        $ManagedPath = Join-Path $RepoRoot $_
+        if (Test-Path -LiteralPath $ManagedPath) {
+            Remove-Item -Recurse -Force -LiteralPath $ManagedPath
+        }
     }
 
     $SkillSources | Sort-Object Name | ForEach-Object {
-        Copy-Item -Recurse -LiteralPath (Join-Path $UpstreamRepo $_.UpstreamPath) -Destination (Join-Path $Dest $_.Name)
+        $SkillDest = Join-Path $Dest $_.Name
+        Copy-Item -Recurse -LiteralPath (Join-Path $UpstreamRepo $_.UpstreamPath) -Destination $SkillDest
+        $Metadata = Join-Path $SkillDest "agents/openai.yaml"
+        $FallbackMetadata = Join-Path $PreservedMetadata "$($_.Name)/openai.yaml"
+        if (!(Test-Path -LiteralPath $Metadata) -and (Test-Path -LiteralPath $FallbackMetadata)) {
+            New-Item -ItemType Directory -Force -Path (Split-Path $Metadata) | Out-Null
+            Copy-Item -LiteralPath $FallbackMetadata -Destination $Metadata
+        }
+    }
+
+    $WritingPatch = Join-Path $Dest "patches/pr-522-writing-great-skills.patch"
+    $WritingSkill = Join-Path $Dest "writing-great-skills/SKILL.md"
+    if (!(Select-String -Quiet -SimpleMatch "policy.allow_implicit_invocation: false" -LiteralPath $WritingSkill)) {
+        git -C $RepoRoot apply --unidiff-zero --check $WritingPatch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Unable to reapply $WritingPatch after the upstream refresh."
+        }
+        git -C $RepoRoot apply --unidiff-zero $WritingPatch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to reapply $WritingPatch after the upstream refresh."
+        }
     }
 
     Write-Host "Updated $($SkillSources.Count) Matt Pocock engineering and productivity skills in $Dest"

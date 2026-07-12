@@ -28,12 +28,14 @@ Skills should provide Model Compensation for recurring failures, not collect gen
 
 Keep `SKILL.md` focused on trigger, orientation, workflow, and routing. Move long or situational detail into linked references, examples, language files, or scripts. Every new or materially edited Code-Affecting Skill needs a concise `Verification` section or checklist that reflects Verification Discipline and Behavioral Coverage.
 
+Every installed skill should include `agents/openai.yaml` with concise OpenAI interface metadata. Keep model-facing discovery triggers in `SKILL.md.description`. For user-only skills, pair Pi and Claude Code's `disable-model-invocation: true` with Codex's `policy.allow_implicit_invocation: false`; model-invoked skills should omit that policy.
+
 When a skill can shape implementation even indirectly, treat it as code-affecting for verification purposes. Planning, architecture, and grilling skills should ask what Verification Surface proves the behavior and should challenge weak answers.
 
 ## Repository Map
 
 - Personal skills live in `skills/<name>/`.
-- Vendored external skills live in `external/mattpocock-skills/<name>/`.
+- Vendored external skills live in `external/<source>/<name>/`, including `external/mattpocock-skills/` and `external/openai-skills/`.
 - Skill install and verification scripts discover every skill folder with a `SKILL.md` under `skills/*` and `external/*/*`.
 - Installer and verification scripts live in `scripts/`.
 - Human setup and installation instructions belong in `README.md`.
