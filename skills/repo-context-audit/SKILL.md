@@ -1,6 +1,7 @@
 ---
 name: repo-context-audit
 description: Audit and improve repository context docs. Use when reviewing or editing AGENTS.md, CONTEXT.md, ADRs, README, skill docs, mission briefs, or agent-context bloat.
+disable-model-invocation: true
 ---
 
 # Repo Context Audit

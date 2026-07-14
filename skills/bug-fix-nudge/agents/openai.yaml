@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bug Fix Nudge"
+  short_description: "Diagnose and fix bugs with a compact evidence loop"
+  default_prompt: "Use $bug-fix-nudge to diagnose and fix this bug with a minimal evidence-driven workflow."
