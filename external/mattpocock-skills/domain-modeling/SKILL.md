@@ -1,6 +1,6 @@
 ---
 name: domain-modeling
-description: Build and sharpen a project's domain model. Use when the user wants to pin down domain terminology or a ubiquitous language, record an architectural decision, or when another skill needs to maintain the domain model.
+description: Build and sharpen a project's domain model. Use when the user wants to pin down domain terminology or a ubiquitous language, record an architectural decision that shapes the domain model or its context boundaries, or when another skill needs to maintain the domain model.
 ---
 
 # Domain Modeling
@@ -72,3 +72,7 @@ Only offer to create an ADR when all three are true:
 3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
 
 If any of the three is missing, skip the ADR. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
+
+## Verification
+
+Before finishing, verify changed glossary terms against concrete scenarios and the current code, confirm `CONTEXT.md` contains no implementation details, and ensure each new ADR satisfies all three criteria above and records the actual trade-off.
