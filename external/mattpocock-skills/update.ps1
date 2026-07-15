@@ -109,6 +109,18 @@ try {
         }
     }
 
+    $AdmissionPatch = Join-Path $Dest "patches/writing-great-skills-admission.patch"
+    if (!(Select-String -Quiet -Pattern "^## Admission$" -LiteralPath $WritingSkill)) {
+        git -C $RepoRoot apply --unidiff-zero --check $AdmissionPatch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Unable to reapply $AdmissionPatch after the upstream refresh."
+        }
+        git -C $RepoRoot apply --unidiff-zero $AdmissionPatch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to reapply $AdmissionPatch after the upstream refresh."
+        }
+    }
+
     Write-Host "Updated $($SkillSources.Count) Matt Pocock engineering and productivity skills in $Dest"
     Write-Host ""
     Write-Host "Review vendored skill changes before committing:"

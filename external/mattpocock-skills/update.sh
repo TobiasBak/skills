@@ -111,6 +111,16 @@ if ! grep -q 'policy.allow_implicit_invocation: false' "$WRITING_SKILL"; then
   fi
 fi
 
+ADMISSION_PATCH="$DEST/patches/writing-great-skills-admission.patch"
+if ! grep -q '^## Admission$' "$WRITING_SKILL"; then
+  if git -C "$REPO_ROOT" apply --unidiff-zero --check "$ADMISSION_PATCH"; then
+    git -C "$REPO_ROOT" apply --unidiff-zero "$ADMISSION_PATCH"
+  else
+    echo "Unable to reapply $ADMISSION_PATCH after the upstream refresh." >&2
+    exit 1
+  fi
+fi
+
 echo "Updated ${#SKILL_NAMES[@]} Matt Pocock engineering and productivity skills in $DEST"
 echo
 echo "Review vendored skill changes before committing:"

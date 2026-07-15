@@ -72,7 +72,7 @@ PowerShell:
 ./external/mattpocock-skills/update.ps1
 ```
 
-The update script temporarily sparse-clones the upstream repo, discovers skill folders under `skills/engineering` and `skills/productivity`, copies those skill folders, removes local Matt Pocock skill folders that no longer match that set, then deletes the temporary clone. Until PR 522 lands upstream, it preserves local `agents/openai.yaml` files when upstream has no corresponding metadata and reapplies the scoped writing guidance from `external/mattpocock-skills/patches/`. Once upstream supplies metadata or equivalent dual-harness guidance, the upstream files win.
+The update script temporarily sparse-clones the upstream repo, discovers skill folders under `skills/engineering` and `skills/productivity`, copies those skill folders, removes local Matt Pocock skill folders that no longer match that set, then deletes the temporary clone. Until PR 522 lands upstream, it preserves local `agents/openai.yaml` files when upstream has no corresponding metadata and reapplies the dual-harness guidance from `external/mattpocock-skills/patches/`. It also reapplies the local skill-admission guidance unless upstream contains an equivalent section. Once upstream supplies metadata or equivalent dual-harness guidance, the upstream files win for that compatibility behavior.
 
 The updater refuses to overwrite uncommitted local changes in selected vendored skill folders. Review or commit local changes first, or force the update only when you intentionally want to overwrite them:
 

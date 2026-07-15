@@ -1,0 +1,10 @@
+diff --git a/external/mattpocock-skills/writing-great-skills/SKILL.md b/external/mattpocock-skills/writing-great-skills/SKILL.md
+--- a/external/mattpocock-skills/writing-great-skills/SKILL.md
++++ b/external/mattpocock-skills/writing-great-skills/SKILL.md
+@@ -10,0 +11,6 @@ A skill exists to wrangle determinism out of a stochastic system. **Predictabili
++## Admission
++
++Before drafting, state the observed model failure and the smallest behavioral delta that prevents it. Start with flat reference. Add steps only when their order itself compensates for the failure.
++
++For every proposed line, ask: would removing this make the observed failure more likely under the skill's trigger? If not, omit it.
++

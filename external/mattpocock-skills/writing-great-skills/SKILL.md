@@ -8,6 +8,12 @@ A skill exists to wrangle determinism out of a stochastic system. **Predictabili
 
 **Bold terms** are defined in [`GLOSSARY.md`](GLOSSARY.md); look them up there for the full meaning.
 
+## Admission
+
+Before drafting, state the observed model failure and the smallest behavioral delta that prevents it. Start with flat reference. Add steps only when their order itself compensates for the failure.
+
+For every proposed line, ask: would removing this make the observed failure more likely under the skill's trigger? If not, omit it.
+
 ## Invocation
 
 Two choices, trading different costs:
