@@ -1,4 +1,0 @@
-interface:
-  display_name: "Restrained UI Design"
-  short_description: "Build purposeful UI without generic AI composition"
-  default_prompt: "Use $restrained-ui-design to design or implement this interface with restrained hierarchy, purposeful density, and rendered verification."

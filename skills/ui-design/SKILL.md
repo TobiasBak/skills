@@ -1,13 +1,13 @@
 ---
-name: restrained-ui-design
-description: Invoke when working on or reviewing graphical UI.
+name: ui-design
+description: Invoke when designing, implementing, or reviewing graphical UI.
 ---
 
-# Restrained UI Design
+# UI Design
 
 An explicit user brief and established product design system take precedence. Otherwise:
 
-1. **Black first.** Start from a black or near-black canvas and neutral grayscale. Reserve color for meaning, focus, action, and status.
+1. **Neutral foundations.** Use white or near-white foundations for light designs and black or grayscale foundations for dark designs. Keep the palette simple, reserving chromatic color for meaning, focus, action, and status.
 2. **Structure without cards.** Create hierarchy with spacing, alignment, typography, density, and subtle dividers. Use contained surfaces only where the boundary aids interaction or comprehension.
 3. **Professional and sleek.** Use restrained typography, precise alignment, consistent density, and quiet interaction states. Keep visual effects purposeful.
 4. **Only useful UI.** Every visible element must help the user orient, compare, diagnose, decide, or act. Reveal secondary detail deliberately.
