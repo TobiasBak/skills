@@ -32,29 +32,15 @@ Engineering and productivity skills from:
 
 - https://github.com/mattpocock/skills
 
-The updater copies selected skill folders under Matt Pocock's upstream `skills/engineering` and `skills/productivity` directories. It excludes `ask-matt`, `resolving-merge-conflicts`, and `setup-matt-pocock-skills`, plus upstream `deprecated`, `in-progress`, `misc`, and `personal` skills.
+The updater copies only the skill folders listed below from Matt Pocock's upstream `skills/engineering` and `skills/productivity` directories, plus the explicitly admitted `skills/in-progress/batch-grill-me`. Every other upstream skill is excluded.
 
 Currently vendored from those upstream folders:
 
-- `code-review`
-- `codebase-design`
-- `diagnosing-bugs`
-- `domain-modeling`
-- `grill-me`
+- `batch-grill-me`
 - `grill-with-docs`
-- `grilling`
 - `handoff`
-- `implement`
-- `improve-codebase-architecture`
-- `prototype`
-- `research`
-- `tdd`
-- `teach`
 - `to-spec`
 - `to-tickets`
-- `triage`
-- `wayfinder`
-- `writing-great-skills`
 
 Only those skill folders are kept. Root upstream files like `CLAUDE.md`, `CONTEXT.md`, and the upstream `README.md` are intentionally excluded.
 
@@ -72,7 +58,7 @@ PowerShell:
 ./external/mattpocock-skills/update.ps1
 ```
 
-The update script temporarily sparse-clones the upstream repo, discovers skill folders under `skills/engineering` and `skills/productivity`, copies those skill folders, removes local Matt Pocock skill folders that no longer match that set, then deletes the temporary clone. Until PR 522 lands upstream, it preserves local `agents/openai.yaml` files when upstream has no corresponding metadata and reapplies the dual-harness guidance from `external/mattpocock-skills/patches/`. It also reapplies the local skill-admission guidance unless upstream contains an equivalent section. Once upstream supplies metadata or equivalent dual-harness guidance, the upstream files win for that compatibility behavior.
+The update script temporarily sparse-clones exactly the five upstream paths listed above, copies them, removes local Matt Pocock skill folders outside that allowlist, then deletes the temporary clone. Future upstream folders are never discovered or admitted automatically. Local `agents/openai.yaml` files remain locally owned and are restored over upstream metadata so explicit prompts and invocation policy survive refreshes. Maintained overlays keep `grill-with-docs` independent of excluded skills and keep `to-spec`/`to-tickets` independent of Matt's excluded setup skill. All overlays are validated before vendored folders are replaced; if an upstream change makes one fail, the updater stops without altering the vendored set.
 
 The updater refuses to overwrite uncommitted local changes in selected vendored skill folders. Review or commit local changes first, or force the update only when you intentionally want to overwrite them:
 
@@ -86,28 +72,6 @@ bash ./external/mattpocock-skills/update.sh --force
 
 After updating, review the printed `git diff` before committing the vendored changes.
 
-### OpenAI Docs skill
-
-The official OpenAI Docs skill is vendored from:
-
-- https://github.com/openai/skills/tree/main/skills/.curated/openai-docs
-
-It lives at `external/openai-skills/openai-docs` and includes its upstream license, references, scripts, agents, and assets.
-
-Update it with:
-
-```bash
-./external/openai-skills/update.sh
-```
-
-```powershell
-./external/openai-skills/update.ps1
-```
-
-The updater refuses to overwrite uncommitted changes in the vendored skill. Review or commit them first, or use `--force` / `-Force` only when intentionally replacing them with upstream.
-
-After updating, review the printed `git diff` before committing.
-
 ## Installing skills into Pi and Codex
 
 By default, the installer links skills into Pi at `~/.pi/agent/skills`:
@@ -120,19 +84,18 @@ bash ./scripts/install-links.sh
 ./scripts/install-links.ps1
 ```
 
-Install skills into Codex at `~/.agents/skills` by overriding `PI_SKILLS_DIR`. Exclude `openai-docs` because current Codex releases already bundle that skill; installing this vendored copy as well creates a duplicate model-visible entry.
+Install skills into Codex at `~/.agents/skills` by overriding `PI_SKILLS_DIR`.
 
 ```bash
-PI_SKILLS_DIR="$HOME/.agents/skills" SKILLS_EXCLUDE="openai-docs" bash ./scripts/install-links.sh --fix
+PI_SKILLS_DIR="$HOME/.agents/skills" bash ./scripts/install-links.sh --fix
 ```
 
 ```powershell
 $env:PI_SKILLS_DIR = Join-Path $HOME ".agents/skills"
-$env:SKILLS_EXCLUDE = "openai-docs"
 ./scripts/install-links.ps1 -Fix
 ```
 
-Use `PI_SKILLS_DIR` similarly for any alternate target directory. `SKILLS_EXCLUDE` accepts a comma-separated list of skill names that should not be linked. Apply the same value when running `verify-links.ps1` against a filtered target.
+Use `PI_SKILLS_DIR` similarly for any alternate target directory. `SKILLS_EXCLUDE` optionally accepts a comma-separated list of skill names that should not be linked; apply the same value when running `verify-links.ps1` against a filtered target.
 
 Pi also scans `~/.agents/skills`. When both global locations contain a skill with the same name, Pi warns and keeps only the first entry; it does not put both descriptions in model context.
 

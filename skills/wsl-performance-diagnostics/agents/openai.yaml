@@ -1,4 +1,0 @@
-interface:
-  display_name: "WSL Performance Diagnostics"
-  short_description: "Diagnose WSL load and stale processes safely"
-  default_prompt: "Use $wsl-performance-diagnostics to diagnose this WSL slowdown, attribute memory and process ownership, clean up only proven stale work, and measure the result."

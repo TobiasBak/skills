@@ -21,35 +21,35 @@ REPO_ROOT="$(cd "$DEST/../.." && pwd)"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills "$TMP/repo"
-git -C "$TMP/repo" sparse-checkout set --no-cone '/skills/engineering/*' '/skills/productivity/*'
-
-mapfile -t UPSTREAM_SKILL_DIRS < <(
-  find "$TMP/repo/skills/engineering" "$TMP/repo/skills/productivity" \
-    -mindepth 2 -maxdepth 2 -type f -name SKILL.md -printf '%h\n' |
-    sed "s#^$TMP/repo/##" |
-    sort -u
+SKILL_NAMES=(
+  batch-grill-me
+  grill-with-docs
+  handoff
+  to-spec
+  to-tickets
+)
+UPSTREAM_PATHS=(
+  skills/in-progress/batch-grill-me
+  skills/engineering/grill-with-docs
+  skills/productivity/handoff
+  skills/engineering/to-spec
+  skills/engineering/to-tickets
 )
 
-if [ "${#UPSTREAM_SKILL_DIRS[@]}" -eq 0 ]; then
-  echo "No engineering or productivity skills found upstream." >&2
-  exit 1
-fi
+git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills "$TMP/repo"
+git -C "$TMP/repo" sparse-checkout set --no-cone \
+  '/skills/in-progress/batch-grill-me' \
+  '/skills/engineering/grill-with-docs' \
+  '/skills/productivity/handoff' \
+  '/skills/engineering/to-spec' \
+  '/skills/engineering/to-tickets'
 
-declare -A NAME_TO_UPSTREAM=()
-for upstream_dir in "${UPSTREAM_SKILL_DIRS[@]}"; do
-  name="$(basename "$upstream_dir")"
-  case "$name" in
-    ask-matt|resolving-merge-conflicts|setup-matt-pocock-skills) continue ;;
-  esac
-  if [[ -n "${NAME_TO_UPSTREAM[$name]:-}" ]]; then
-    echo "Duplicate upstream skill name '$name': ${NAME_TO_UPSTREAM[$name]}, $upstream_dir" >&2
+for upstream_path in "${UPSTREAM_PATHS[@]}"; do
+  if [ ! -f "$TMP/repo/$upstream_path/SKILL.md" ]; then
+    echo "Selected Matt Pocock skill is missing upstream: $upstream_path" >&2
     exit 1
   fi
-  NAME_TO_UPSTREAM["$name"]="$upstream_dir"
 done
-
-mapfile -t SKILL_NAMES < <(printf '%s\n' "${!NAME_TO_UPSTREAM[@]}" | sort)
 
 CURRENT_SKILL_PATHS=()
 while IFS= read -r -d '' skill_file; do
@@ -79,49 +79,60 @@ if [ "${#MANAGED_SKILL_PATHS[@]}" -gt 0 ]; then
   fi
 fi
 
-PRESERVED_METADATA="$TMP/preserved-openai-metadata"
-for name in "${SKILL_NAMES[@]}"; do
+PREPARED_ROOT="$TMP/prepared"
+PREPARED_DEST="$PREPARED_ROOT/external/mattpocock-skills"
+mkdir -p "$PREPARED_DEST"
+git -C "$PREPARED_ROOT" init --quiet
+
+for i in "${!SKILL_NAMES[@]}"; do
+  name="${SKILL_NAMES[$i]}"
+  upstream_path="${UPSTREAM_PATHS[$i]}"
+  cp -R "$TMP/repo/$upstream_path" "$PREPARED_DEST/$name"
+
   metadata="$DEST/$name/agents/openai.yaml"
   if [ -f "$metadata" ]; then
-    mkdir -p "$PRESERVED_METADATA/$name"
-    cp "$metadata" "$PRESERVED_METADATA/$name/openai.yaml"
+    mkdir -p "$PREPARED_DEST/$name/agents"
+    cp "$metadata" "$PREPARED_DEST/$name/agents/openai.yaml"
   fi
 done
+
+apply_overlay() {
+  local patch="$1"
+  local target="$2"
+  local marker="$3"
+
+  if grep -Fq -- "$marker" "$target"; then
+    return
+  fi
+  if git -C "$PREPARED_ROOT" apply --unidiff-zero --check "$patch"; then
+    git -C "$PREPARED_ROOT" apply --unidiff-zero "$patch"
+  else
+    echo "Unable to reapply $patch after the upstream refresh." >&2
+    exit 1
+  fi
+}
+
+apply_overlay \
+  "$DEST/patches/grill-with-docs-local.patch" \
+  "$PREPARED_DEST/grill-with-docs/SKILL.md" \
+  '/batch-grill-me'
+apply_overlay \
+  "$DEST/patches/to-spec-local.patch" \
+  "$PREPARED_DEST/to-spec/SKILL.md" \
+  'A configured tracker does not by itself authorize an external write'
+apply_overlay \
+  "$DEST/patches/to-tickets-local.patch" \
+  "$PREPARED_DEST/to-tickets/SKILL.md" \
+  'A ticket may start when every ticket in its "Blocked by" list is complete'
 
 for managed_path in "${MANAGED_SKILL_PATHS[@]}"; do
   rm -rf "$REPO_ROOT/$managed_path"
 done
-
 for name in "${SKILL_NAMES[@]}"; do
-  cp -R "$TMP/repo/${NAME_TO_UPSTREAM[$name]}" "$DEST/$name"
-  if [ ! -f "$DEST/$name/agents/openai.yaml" ] && [ -f "$PRESERVED_METADATA/$name/openai.yaml" ]; then
-    mkdir -p "$DEST/$name/agents"
-    cp "$PRESERVED_METADATA/$name/openai.yaml" "$DEST/$name/agents/openai.yaml"
-  fi
+  cp -R "$PREPARED_DEST/$name" "$DEST/$name"
 done
 
-WRITING_PATCH="$DEST/patches/pr-522-writing-great-skills.patch"
-WRITING_SKILL="$DEST/writing-great-skills/SKILL.md"
-if ! grep -q 'policy.allow_implicit_invocation: false' "$WRITING_SKILL"; then
-  if git -C "$REPO_ROOT" apply --unidiff-zero --check "$WRITING_PATCH"; then
-    git -C "$REPO_ROOT" apply --unidiff-zero "$WRITING_PATCH"
-  else
-    echo "Unable to reapply $WRITING_PATCH after the upstream refresh." >&2
-    exit 1
-  fi
-fi
-
-ADMISSION_PATCH="$DEST/patches/writing-great-skills-admission.patch"
-if ! grep -q '^## Admission$' "$WRITING_SKILL"; then
-  if git -C "$REPO_ROOT" apply --unidiff-zero --check "$ADMISSION_PATCH"; then
-    git -C "$REPO_ROOT" apply --unidiff-zero "$ADMISSION_PATCH"
-  else
-    echo "Unable to reapply $ADMISSION_PATCH after the upstream refresh." >&2
-    exit 1
-  fi
-fi
-
-echo "Updated ${#SKILL_NAMES[@]} Matt Pocock engineering and productivity skills in $DEST"
+echo "Updated ${#SKILL_NAMES[@]} explicitly selected Matt Pocock skills in $DEST"
 echo
 echo "Review vendored skill changes before committing:"
 git -C "$REPO_ROOT" status --short -- external/mattpocock-skills

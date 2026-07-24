@@ -1,0 +1,26 @@
+--- a/external/mattpocock-skills/to-spec/SKILL.md
++++ b/external/mattpocock-skills/to-spec/SKILL.md
+@@ -3 +3 @@
+-description: Turn the current conversation into a spec and publish it to the project issue tracker — no interview, just synthesis of what you've already discussed.
++description: Turn the current conversation into a spec and publish it to an explicitly configured tracker or a local file — no interview, just synthesis of what you've already discussed.
+@@ -9 +9 @@
+-The issue tracker and triage label vocabulary should have been provided to you — run `/setup-matt-pocock-skills` if not.
++Use a repository or user tracker configuration only when it explicitly names the destination and conventions. A configured tracker does not by itself authorize an external write; publish remotely only when the user has authorized it for this work. Otherwise write the spec to `.scratch/<feature-slug>/spec.md`. Apply only labels or workflow fields explicitly configured for that repository or requested by the user.
+@@ -19 +19 @@
+-3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
++3. Write the spec using the template below, then publish it to the explicitly configured and authorized tracker. If no such destination is available, use the local-file default above.
+@@ -59 +59 @@
+-## Testing Decisions
++## Verification Decisions
+@@ -61 +61 @@
+-A list of testing decisions that were made. Include:
++Describe the behavioral verification expected from implementation. Include:
+@@ -63,3 +63,5 @@
+-- A description of what makes a good test (only test external behavior, not implementation details)
+-- Which modules will be tested
+-- Prior art for the tests (i.e. similar types of tests in the codebase)
++- The public interface, real workflow, rendered artifact, command output, or other observable surface that proves the feature works
++- The meaningful behaviors and failure states that must be exercised
++- Relevant prior art in the codebase
++- Supporting compilation, type, lint, or unit checks where useful, without treating implementation-detail checks as sufficient by default
++- What an implementer must report when environmental limits allow only partial verification, including unverified behavior and residual risk

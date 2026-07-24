@@ -3,50 +3,42 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$ExcludedSkillNames = @(
-    "ask-matt",
-    "resolving-merge-conflicts",
-    "setup-matt-pocock-skills"
+
+$SkillSources = @(
+    [pscustomobject]@{ Name = "batch-grill-me"; UpstreamPath = "skills/in-progress/batch-grill-me"; RepoPath = "external/mattpocock-skills/batch-grill-me" }
+    [pscustomobject]@{ Name = "grill-with-docs"; UpstreamPath = "skills/engineering/grill-with-docs"; RepoPath = "external/mattpocock-skills/grill-with-docs" }
+    [pscustomobject]@{ Name = "handoff"; UpstreamPath = "skills/productivity/handoff"; RepoPath = "external/mattpocock-skills/handoff" }
+    [pscustomobject]@{ Name = "to-spec"; UpstreamPath = "skills/engineering/to-spec"; RepoPath = "external/mattpocock-skills/to-spec" }
+    [pscustomobject]@{ Name = "to-tickets"; UpstreamPath = "skills/engineering/to-tickets"; RepoPath = "external/mattpocock-skills/to-tickets" }
 )
 
-$Dest = Resolve-Path $PSScriptRoot
+function Invoke-Git {
+    & git @args
+    if ($LASTEXITCODE -ne 0) {
+        throw "git $($args -join ' ') failed with exit code $LASTEXITCODE."
+    }
+}
+
+$Dest = (Resolve-Path $PSScriptRoot).Path
 $RepoRoot = (Resolve-Path (Join-Path $Dest "../..")).Path
 $Tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("skills-" + [System.Guid]::NewGuid())
 
 try {
-    git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills (Join-Path $Tmp "repo")
+    New-Item -ItemType Directory -Path $Tmp | Out-Null
     $UpstreamRepo = Join-Path $Tmp "repo"
+    Invoke-Git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills $UpstreamRepo
+    Invoke-Git -C $UpstreamRepo sparse-checkout set --no-cone `
+        /skills/in-progress/batch-grill-me `
+        /skills/engineering/grill-with-docs `
+        /skills/productivity/handoff `
+        /skills/engineering/to-spec `
+        /skills/engineering/to-tickets
 
-    git -C $UpstreamRepo sparse-checkout set --no-cone /skills/engineering/* /skills/productivity/*
-    $SkillRoots = @("skills/engineering", "skills/productivity")
-    $SkillSources = foreach ($SkillRoot in $SkillRoots) {
-        $RootPath = Join-Path $UpstreamRepo $SkillRoot
-        if (Test-Path -LiteralPath $RootPath) {
-            Get-ChildItem -Directory -LiteralPath $RootPath | Where-Object {
-                $_.Name -notin $ExcludedSkillNames -and
-                (Test-Path -LiteralPath (Join-Path $_.FullName "SKILL.md"))
-            } | ForEach-Object {
-                [pscustomobject]@{
-                    Name = $_.Name
-                    UpstreamPath = "$SkillRoot/$($_.Name)"
-                    RepoPath = "external/mattpocock-skills/$($_.Name)"
-                }
-            }
+    foreach ($SkillSource in $SkillSources) {
+        $SkillFile = Join-Path $UpstreamRepo "$($SkillSource.UpstreamPath)/SKILL.md"
+        if (!(Test-Path -LiteralPath $SkillFile)) {
+            throw "Selected Matt Pocock skill is missing upstream: $($SkillSource.UpstreamPath)"
         }
-    }
-    $SkillSources = @($SkillSources | Sort-Object Name)
-
-    if ($SkillSources.Count -eq 0) {
-        Write-Error "No engineering or productivity skills found upstream."
-    }
-
-    $Duplicates = @($SkillSources | Group-Object Name | Where-Object { $_.Count -gt 1 })
-    if ($Duplicates.Count -gt 0) {
-        $Messages = $Duplicates | ForEach-Object {
-            $Paths = $_.Group | ForEach-Object { $_.UpstreamPath }
-            "Duplicate upstream skill name '$($_.Name)': $($Paths -join ', ')"
-        }
-        Write-Error ($Messages -join "`n")
     }
 
     $CurrentSkillPaths = @(
@@ -60,72 +52,73 @@ try {
     $ManagedSkillPaths = @($CurrentSkillPaths + $TargetSkillPaths | Sort-Object -Unique)
 
     if ($ManagedSkillPaths.Count -gt 0) {
-        $PendingChanges = git -C $RepoRoot status --short -- $ManagedSkillPaths
-        if ($PendingChanges -and !$Force) {
-            Write-Error ("Refusing to overwrite vendored skills with uncommitted local changes:`n" +
+        $PendingChanges = @(Invoke-Git -C $RepoRoot status --short -- $ManagedSkillPaths)
+        if ($PendingChanges.Count -gt 0 -and !$Force) {
+            throw ("Refusing to overwrite vendored skills with uncommitted local changes:`n" +
                 ($PendingChanges -join "`n") +
                 "`nReview or commit these changes, then rerun. Use -Force only when you intentionally want to overwrite them.")
         }
     }
 
-    $PreservedMetadata = Join-Path $Tmp "preserved-openai-metadata"
-    $SkillSources | ForEach-Object {
-        $Metadata = Join-Path $Dest "$($_.Name)/agents/openai.yaml"
+    $PreparedRoot = Join-Path $Tmp "prepared"
+    $PreparedDest = Join-Path $PreparedRoot "external/mattpocock-skills"
+    New-Item -ItemType Directory -Force -Path $PreparedDest | Out-Null
+    Invoke-Git -C $PreparedRoot init --quiet
+
+    foreach ($SkillSource in $SkillSources) {
+        $SkillDest = Join-Path $PreparedDest $SkillSource.Name
+        Copy-Item -Recurse -LiteralPath (Join-Path $UpstreamRepo $SkillSource.UpstreamPath) -Destination $SkillDest
+
+        $Metadata = Join-Path $Dest "$($SkillSource.Name)/agents/openai.yaml"
         if (Test-Path -LiteralPath $Metadata) {
-            $PreservedSkill = Join-Path $PreservedMetadata $_.Name
-            New-Item -ItemType Directory -Force -Path $PreservedSkill | Out-Null
-            Copy-Item -LiteralPath $Metadata -Destination (Join-Path $PreservedSkill "openai.yaml")
+            $MetadataDest = Join-Path $SkillDest "agents/openai.yaml"
+            New-Item -ItemType Directory -Force -Path (Split-Path $MetadataDest) | Out-Null
+            Copy-Item -Force -LiteralPath $Metadata -Destination $MetadataDest
         }
     }
 
-    $ManagedSkillPaths | ForEach-Object {
-        $ManagedPath = Join-Path $RepoRoot $_
+    function Apply-OverlayPatch {
+        param(
+            [string]$Patch,
+            [string]$Target,
+            [string]$Marker
+        )
+
+        if (Select-String -Quiet -SimpleMatch $Marker -LiteralPath $Target) {
+            return
+        }
+        Invoke-Git -C $PreparedRoot apply --unidiff-zero --check $Patch
+        Invoke-Git -C $PreparedRoot apply --unidiff-zero $Patch
+    }
+
+    Apply-OverlayPatch `
+        (Join-Path $Dest "patches/grill-with-docs-local.patch") `
+        (Join-Path $PreparedDest "grill-with-docs/SKILL.md") `
+        "/batch-grill-me"
+    Apply-OverlayPatch `
+        (Join-Path $Dest "patches/to-spec-local.patch") `
+        (Join-Path $PreparedDest "to-spec/SKILL.md") `
+        "A configured tracker does not by itself authorize an external write"
+    Apply-OverlayPatch `
+        (Join-Path $Dest "patches/to-tickets-local.patch") `
+        (Join-Path $PreparedDest "to-tickets/SKILL.md") `
+        'A ticket may start when every ticket in its "Blocked by" list is complete'
+
+    foreach ($ManagedSkillPath in $ManagedSkillPaths) {
+        $ManagedPath = Join-Path $RepoRoot $ManagedSkillPath
         if (Test-Path -LiteralPath $ManagedPath) {
             Remove-Item -Recurse -Force -LiteralPath $ManagedPath
         }
     }
-
-    $SkillSources | Sort-Object Name | ForEach-Object {
-        $SkillDest = Join-Path $Dest $_.Name
-        Copy-Item -Recurse -LiteralPath (Join-Path $UpstreamRepo $_.UpstreamPath) -Destination $SkillDest
-        $Metadata = Join-Path $SkillDest "agents/openai.yaml"
-        $FallbackMetadata = Join-Path $PreservedMetadata "$($_.Name)/openai.yaml"
-        if (!(Test-Path -LiteralPath $Metadata) -and (Test-Path -LiteralPath $FallbackMetadata)) {
-            New-Item -ItemType Directory -Force -Path (Split-Path $Metadata) | Out-Null
-            Copy-Item -LiteralPath $FallbackMetadata -Destination $Metadata
-        }
+    foreach ($SkillSource in $SkillSources) {
+        Copy-Item -Recurse -LiteralPath (Join-Path $PreparedDest $SkillSource.Name) -Destination (Join-Path $Dest $SkillSource.Name)
     }
 
-    $WritingPatch = Join-Path $Dest "patches/pr-522-writing-great-skills.patch"
-    $WritingSkill = Join-Path $Dest "writing-great-skills/SKILL.md"
-    if (!(Select-String -Quiet -SimpleMatch "policy.allow_implicit_invocation: false" -LiteralPath $WritingSkill)) {
-        git -C $RepoRoot apply --unidiff-zero --check $WritingPatch
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "Unable to reapply $WritingPatch after the upstream refresh."
-        }
-        git -C $RepoRoot apply --unidiff-zero $WritingPatch
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "Failed to reapply $WritingPatch after the upstream refresh."
-        }
-    }
-
-    $AdmissionPatch = Join-Path $Dest "patches/writing-great-skills-admission.patch"
-    if (!(Select-String -Quiet -Pattern "^## Admission$" -LiteralPath $WritingSkill)) {
-        git -C $RepoRoot apply --unidiff-zero --check $AdmissionPatch
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "Unable to reapply $AdmissionPatch after the upstream refresh."
-        }
-        git -C $RepoRoot apply --unidiff-zero $AdmissionPatch
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "Failed to reapply $AdmissionPatch after the upstream refresh."
-        }
-    }
-
-    Write-Host "Updated $($SkillSources.Count) Matt Pocock engineering and productivity skills in $Dest"
+    Write-Host "Updated $($SkillSources.Count) explicitly selected Matt Pocock skills in $Dest"
     Write-Host ""
     Write-Host "Review vendored skill changes before committing:"
-    git -C $RepoRoot status --short -- external/mattpocock-skills
-    git -C $RepoRoot --no-pager diff -- external/mattpocock-skills
+    Invoke-Git -C $RepoRoot status --short -- external/mattpocock-skills
+    Invoke-Git -C $RepoRoot --no-pager diff -- external/mattpocock-skills
 } finally {
     Remove-Item -Recurse -Force $Tmp -ErrorAction SilentlyContinue
 }

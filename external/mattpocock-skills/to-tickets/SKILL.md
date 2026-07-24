@@ -1,6 +1,6 @@
 ---
 name: to-tickets
-description: Break a plan, spec, or the current conversation into a set of tracer-bullet tickets, each declaring its blocking edges, published to the configured tracker — edges as text in a local file, or native blocking links on a real tracker.
+description: Break a plan, spec, or the current conversation into tracer-bullet tickets with explicit blocking edges, published to an authorized configured tracker or one local file per ticket.
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Break a plan, spec, or conversation into a set of **tickets** — tracer-bullet vertical slices, each declaring the tickets that **block** it.
 
-The issue tracker and triage label vocabulary should have been provided to you — run `/setup-matt-pocock-skills` if not.
+Use a repository or user tracker configuration only when it explicitly names the destination and conventions. A configured tracker does not by itself authorize an external write; publish remotely only when the user has authorized it for this work. Otherwise use the local-file default below. Apply only labels or workflow fields explicitly configured for that repository or requested by the user.
 
 ## Process
 
@@ -55,37 +55,38 @@ Ask the user:
 
 Iterate until the user approves the breakdown.
 
-### 5. Publish the tickets to the configured tracker
+### 5. Publish the tickets
 
-Publish the approved tickets. **How** depends on the tracker `/setup-matt-pocock-skills` configured — the tickets are the same either way, only the shape of the blocking edges changes:
+Publish the approved tickets to the explicitly configured and authorized tracker. If no such destination is available, use the local-file default. The tickets are the same either way; only the representation of blocking edges changes:
 
-- **Local files** → write one `tickets.md` in the repo root, all tickets in dependency order (blockers first), each with its "Blocked by" listing the titles it depends on. Use the file template below.
-- **A real issue tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use the platform's native blocking / sub-issue relationship where it has one; otherwise set each ticket's "Blocked by" to the blocking issues. Apply the `ready-for-agent` triage label unless instructed otherwise — the tickets are agent-grabbable by construction.
+- **Local default** → write one file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Each file's "Blocked by" lists the numbers/titles it depends on. Use the per-ticket file template below — one ticket per file, never a single combined file.
+- **Authorized real tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order so blocking edges can reference real identifiers. Use a native blocking relationship when available; otherwise record explicit "Blocked by" references in each ticket. Do not create labels, statuses, projects, or other tracker configuration, and apply only values already configured or explicitly requested.
+
+A ticket may start when every ticket in its "Blocked by" list is complete. Tickets with no blockers form the initial frontier; completing them may unblock the next frontier. Do not treat numbering alone as a dependency.
 
 Do NOT close or modify any parent issue.
 
-<tickets-file-template>
+<local-ticket-template>
 
-# Tickets: <short name of the work>
-
-A one-line summary of what these tickets build. Reference the source spec if there is one.
-
-Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.
-
-## <Ticket title>
+# <NN> — <Ticket title>
 
 **What to build:** the end-to-end behaviour this ticket makes work, from the user's perspective — not a layer-by-layer implementation list.
 
-**Blocked by:** the titles of the tickets that gate this one, or "None — can start immediately".
+**Blocked by:** the numbers/titles of the tickets that gate this one, or "None — can start immediately".
 
-- [ ] Acceptance criterion 1
-- [ ] Acceptance criterion 2
+## Acceptance criteria
 
-## <Ticket title>
+- [ ] Observable behavior criterion 1
+- [ ] Observable behavior criterion 2
 
-...
+## Verification
 
-</tickets-file-template>
+- **Behavioral surface:** the public interface, real workflow, rendered artifact, command output, or other observable surface to exercise.
+- **Coverage:** the meaningful success and failure behavior this ticket must prove.
+- **Supporting checks:** relevant compile, type, lint, or focused unit checks that supplement the behavioral evidence.
+- **Partial verification:** if full verification is blocked, report what ran, what remains unverified, why, and the residual risk.
+
+</local-ticket-template>
 
 <issue-template>
 
@@ -99,8 +100,15 @@ The end-to-end behaviour this ticket makes work, from the user's perspective —
 
 ## Acceptance criteria
 
-- [ ] Criterion 1
-- [ ] Criterion 2
+- [ ] Observable behavior criterion 1
+- [ ] Observable behavior criterion 2
+
+## Verification
+
+- **Behavioral surface:** the public interface, real workflow, rendered artifact, command output, or other observable surface to exercise.
+- **Coverage:** the meaningful success and failure behavior this ticket must prove.
+- **Supporting checks:** relevant compile, type, lint, or focused unit checks that supplement the behavioral evidence.
+- **Partial verification:** if full verification is blocked, report what ran, what remains unverified, why, and the residual risk.
 
 ## Blocked by
 
@@ -109,6 +117,3 @@ The end-to-end behaviour this ticket makes work, from the user's perspective —
 </issue-template>
 
 In either form, avoid specific file paths or code snippets — they go stale fast. Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it and note briefly that it came from a prototype. Trim to the decision-rich parts — not a working demo, just the important bits.
-
-Work the frontier one ticket at a time with `/implement`, clearing context between tickets.
-</content>

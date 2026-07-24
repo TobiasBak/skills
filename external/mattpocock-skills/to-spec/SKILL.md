@@ -1,12 +1,12 @@
 ---
 name: to-spec
-description: Turn the current conversation into a spec and publish it to the project issue tracker — no interview, just synthesis of what you've already discussed.
+description: Turn the current conversation into a spec and publish it to an explicitly configured tracker or a local file — no interview, just synthesis of what you've already discussed.
 disable-model-invocation: true
 ---
 
 This skill takes the current conversation context and codebase understanding and produces a spec (you may know this document as a PRD). Do NOT interview the user — just synthesize what you already know.
 
-The issue tracker and triage label vocabulary should have been provided to you — run `/setup-matt-pocock-skills` if not.
+Use a repository or user tracker configuration only when it explicitly names the destination and conventions. A configured tracker does not by itself authorize an external write; publish remotely only when the user has authorized it for this work. Otherwise write the spec to `.scratch/<feature-slug>/spec.md`. Apply only labels or workflow fields explicitly configured for that repository or requested by the user.
 
 ## Process
 
@@ -16,7 +16,7 @@ The issue tracker and triage label vocabulary should have been provided to you �
 
 Check with the user that these seams match their expectations.
 
-3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
+3. Write the spec using the template below, then publish it to the explicitly configured and authorized tracker. If no such destination is available, use the local-file default above.
 
 <spec-template>
 
@@ -56,13 +56,15 @@ Do NOT include specific file paths or code snippets. They may end up being outda
 
 Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it within the relevant decision and note briefly that it came from a prototype. Trim to the decision-rich parts — not a working demo, just the important bits.
 
-## Testing Decisions
+## Verification Decisions
 
-A list of testing decisions that were made. Include:
+Describe the behavioral verification expected from implementation. Include:
 
-- A description of what makes a good test (only test external behavior, not implementation details)
-- Which modules will be tested
-- Prior art for the tests (i.e. similar types of tests in the codebase)
+- The public interface, real workflow, rendered artifact, command output, or other observable surface that proves the feature works
+- The meaningful behaviors and failure states that must be exercised
+- Relevant prior art in the codebase
+- Supporting compilation, type, lint, or unit checks where useful, without treating implementation-detail checks as sufficient by default
+- What an implementer must report when environmental limits allow only partial verification, including unverified behavior and residual risk
 
 ## Out of Scope
 

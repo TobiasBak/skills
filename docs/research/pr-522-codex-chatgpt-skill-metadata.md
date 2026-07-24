@@ -2,6 +2,10 @@
 
 Research date: 2026-07-12
 
+## Current repository status (2026-07-24)
+
+PR 522 was closed unmerged. Upstream later landed the slimmer PR 551 with display metadata and invocation policy but without PR 522's default prompts. This repository keeps locally owned `agents/openai.yaml` metadata, including explicit starter prompts, for every retained skill. The previously vendored `external/openai-skills/openai-docs` skill and its updater have been removed; references below to OpenAI's public documentation describe the external harness contract, not a current local skill.
+
 ## Findings
 
 - OpenAI documents Agent Skills for the ChatGPT desktop app, Codex CLI, and the Codex IDE extension. Codex initially exposes each skill's `name`, `description`, and path, then loads `SKILL.md` after selection. Concise, front-loaded `SKILL.md` descriptions therefore remain the main model-facing discovery mechanism. [OpenAI Agent Skills docs](https://developers.openai.com/codex/skills)
@@ -24,8 +28,8 @@ The metadata and dual-policy pairing match current OpenAI and Pi behavior. The P
 
 Support all skills in this workbench with OpenAI metadata because the repository explicitly targets Pi, Codex, and ChatGPT desktop. Preserve model discovery triggers in `SKILL.md.description`; use `agents/openai.yaml` for OpenAI presentation, starter prompts, and invocation policy. Keep Pi's `disable-model-invocation` paired with Codex's `allow_implicit_invocation: false` on user-only skills.
 
-Closest rejected alternative: add metadata only to the personal skill and wait for PR 522 to merge before refreshing vendored skills. That avoids temporary vendor divergence, but leaves the currently installed skill set inconsistent across the supported OpenAI surfaces. Reconsider the broader port if this repository stops treating Codex and ChatGPT desktop as supported targets.
+Closest rejected alternative at research time: add metadata only to the personal skill and wait for PR 522 to merge before refreshing vendored skills. PR 522 did not merge, and the repository instead retained local metadata across the final pruned catalog. Reconsider the broader metadata policy if this repository stops treating Codex and ChatGPT desktop as supported targets.
 
 ## Verification status
 
-Static checks prove metadata shape and paired invocation policy. `codex debug prompt-input` confirms model-invoked skills appear once, user-only skills stay out of the implicit list, and the bundled `openai-docs` skill is not duplicated. Actual model selection and ChatGPT desktop presentation still need manual inspection because the ChatGPT client implementation is not public.
+At research time, static checks covered metadata shape and paired invocation policy, and `codex debug prompt-input` covered implicit-list behavior. Those observations predate the final catalog pruning and are historical evidence, not verification of the current installed set. Current repository verification should enumerate the retained catalog, validate paired invocation controls and `$skill-name` starter prompts, and inspect actual Codex or ChatGPT presentation separately when needed.

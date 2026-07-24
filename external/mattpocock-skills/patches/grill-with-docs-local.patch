@@ -1,0 +1,5 @@
+--- a/external/mattpocock-skills/grill-with-docs/SKILL.md
++++ b/external/mattpocock-skills/grill-with-docs/SKILL.md
+@@ -7 +7 @@
+-Run a `/grilling` session, using the `/domain-modeling` skill.
++Run a `/batch-grill-me` session while sharpening domain terms in `CONTEXT.md` and recording only durable, trade-off-bearing architectural decisions as ADRs.

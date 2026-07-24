@@ -1,6 +1,0 @@
-interface:
-  display_name: "Wayfinder"
-  short_description: "Map a large uncertain effort"
-  default_prompt: "Use $wayfinder to map this large effort into investigation tickets and resolve the unknowns."
-policy:
-  allow_implicit_invocation: false
