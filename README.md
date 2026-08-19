@@ -32,15 +32,13 @@ Engineering and productivity skills from:
 
 - https://github.com/mattpocock/skills
 
-The updater copies only the skill folders listed below from Matt Pocock's upstream `skills/engineering` and `skills/productivity` directories, plus the explicitly admitted `skills/in-progress/batch-grill-me`. Every other upstream skill is excluded.
+The updater copies only the skill folders listed below from Matt Pocock's upstream `skills/engineering` and `skills/productivity` directories. Every other upstream skill is excluded.
 
 Currently vendored from those upstream folders:
 
-- `batch-grill-me`
+- `domain-modeling`
 - `grill-with-docs`
-- `handoff`
-- `to-spec`
-- `to-tickets`
+- `grilling`
 
 Only those skill folders are kept. Root upstream files like `CLAUDE.md`, `CONTEXT.md`, and the upstream `README.md` are intentionally excluded.
 
@@ -58,7 +56,7 @@ PowerShell:
 ./external/mattpocock-skills/update.ps1
 ```
 
-The update script temporarily sparse-clones exactly the five upstream paths listed above, copies them, removes local Matt Pocock skill folders outside that allowlist, then deletes the temporary clone. Future upstream folders are never discovered or admitted automatically. Local `agents/openai.yaml` files remain locally owned and are restored over upstream metadata so explicit prompts and invocation policy survive refreshes. Maintained overlays keep `grill-with-docs` independent of excluded skills and keep `to-spec`/`to-tickets` independent of Matt's excluded setup skill. All overlays are validated before vendored folders are replaced; if an upstream change makes one fail, the updater stops without altering the vendored set.
+The update script temporarily sparse-clones exactly the three upstream paths listed above, copies them, removes local Matt Pocock skill folders outside that allowlist, then deletes the temporary clone. Future upstream folders are never discovered or admitted automatically. Local `agents/openai.yaml` files remain locally owned and are restored over upstream metadata so explicit prompts and invocation policy survive refreshes. The vendored `SKILL.md` files stay identical to upstream.
 
 The updater refuses to overwrite uncommitted local changes in selected vendored skill folders. Review or commit local changes first, or force the update only when you intentionally want to overwrite them:
 

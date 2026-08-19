@@ -2,19 +2,19 @@
 
 Research date: 2026-07-24
 
-## Final approved decision
+## Current approved decision
+
+Decision updated: 2026-08-19
 
 The final vendored allowlist is exactly:
 
-- `batch-grill-me`
+- `domain-modeling`
 - `grill-with-docs`
-- `handoff`
-- `to-spec`
-- `to-tickets`
+- `grilling`
 
-This supersedes the pre-decision recommendations below, including the recommendation not to admit `batch-grill-me`. The selected set keeps the differentiated interactive and handoff workflows plus the two planning-artifact workflows. `batch-grill-me` was admitted because asking the whole unblocked decision frontier reduces interaction latency while preserving dependency order; `grill-with-docs` now routes to it. `to-spec` and `to-tickets` use explicit repository or user tracker configuration when available and otherwise write simple local files, without depending on `setup-matt-pocock-skills` or inventing labels.
+This supersedes the previous five-skill decision. `batch-grill-me`, `handoff`, `to-spec`, and `to-tickets` were removed. The selected set keeps upstream's current composition: `grill-with-docs` invokes `grilling` and `domain-modeling`.
 
-The other previously vendored skills were pruned because they were Matt-specific, unsafe or side-effectful for this workbench, redundant with normal agent/repository behavior or retained personal skills, or not valuable enough to justify permanent catalog and maintenance surface. The updater now encodes these five paths as an explicit allowlist, preserves local OpenAI metadata, validates local overlays before replacement, and cannot admit future upstream skills through discovery.
+The other previously vendored skills were pruned because they were Matt-specific, unsafe or side-effectful for this workbench, redundant with normal agent/repository behavior or retained personal skills, or not valuable enough to justify permanent catalog and maintenance surface. The updater now encodes these three paths as an explicit allowlist, preserves local OpenAI metadata, keeps vendored `SKILL.md` files identical to upstream, and cannot admit future upstream skills through discovery.
 
 ## Research snapshot before the final decision
 

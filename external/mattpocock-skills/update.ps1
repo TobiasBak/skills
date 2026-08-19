@@ -5,11 +5,9 @@ param(
 $ErrorActionPreference = "Stop"
 
 $SkillSources = @(
-    [pscustomobject]@{ Name = "batch-grill-me"; UpstreamPath = "skills/in-progress/batch-grill-me"; RepoPath = "external/mattpocock-skills/batch-grill-me" }
+    [pscustomobject]@{ Name = "domain-modeling"; UpstreamPath = "skills/engineering/domain-modeling"; RepoPath = "external/mattpocock-skills/domain-modeling" }
     [pscustomobject]@{ Name = "grill-with-docs"; UpstreamPath = "skills/engineering/grill-with-docs"; RepoPath = "external/mattpocock-skills/grill-with-docs" }
-    [pscustomobject]@{ Name = "handoff"; UpstreamPath = "skills/productivity/handoff"; RepoPath = "external/mattpocock-skills/handoff" }
-    [pscustomobject]@{ Name = "to-spec"; UpstreamPath = "skills/engineering/to-spec"; RepoPath = "external/mattpocock-skills/to-spec" }
-    [pscustomobject]@{ Name = "to-tickets"; UpstreamPath = "skills/engineering/to-tickets"; RepoPath = "external/mattpocock-skills/to-tickets" }
+    [pscustomobject]@{ Name = "grilling"; UpstreamPath = "skills/productivity/grilling"; RepoPath = "external/mattpocock-skills/grilling" }
 )
 
 function Invoke-Git {
@@ -27,12 +25,11 @@ try {
     New-Item -ItemType Directory -Path $Tmp | Out-Null
     $UpstreamRepo = Join-Path $Tmp "repo"
     Invoke-Git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills $UpstreamRepo
+    $UpstreamCommit = Invoke-Git -C $UpstreamRepo rev-parse HEAD
     Invoke-Git -C $UpstreamRepo sparse-checkout set --no-cone `
-        /skills/in-progress/batch-grill-me `
+        /skills/engineering/domain-modeling `
         /skills/engineering/grill-with-docs `
-        /skills/productivity/handoff `
-        /skills/engineering/to-spec `
-        /skills/engineering/to-tickets
+        /skills/productivity/grilling
 
     foreach ($SkillSource in $SkillSources) {
         $SkillFile = Join-Path $UpstreamRepo "$($SkillSource.UpstreamPath)/SKILL.md"
@@ -63,7 +60,6 @@ try {
     $PreparedRoot = Join-Path $Tmp "prepared"
     $PreparedDest = Join-Path $PreparedRoot "external/mattpocock-skills"
     New-Item -ItemType Directory -Force -Path $PreparedDest | Out-Null
-    Invoke-Git -C $PreparedRoot init --quiet
 
     foreach ($SkillSource in $SkillSources) {
         $SkillDest = Join-Path $PreparedDest $SkillSource.Name
@@ -77,33 +73,6 @@ try {
         }
     }
 
-    function Apply-OverlayPatch {
-        param(
-            [string]$Patch,
-            [string]$Target,
-            [string]$Marker
-        )
-
-        if (Select-String -Quiet -SimpleMatch $Marker -LiteralPath $Target) {
-            return
-        }
-        Invoke-Git -C $PreparedRoot apply --unidiff-zero --check $Patch
-        Invoke-Git -C $PreparedRoot apply --unidiff-zero $Patch
-    }
-
-    Apply-OverlayPatch `
-        (Join-Path $Dest "patches/grill-with-docs-local.patch") `
-        (Join-Path $PreparedDest "grill-with-docs/SKILL.md") `
-        "/batch-grill-me"
-    Apply-OverlayPatch `
-        (Join-Path $Dest "patches/to-spec-local.patch") `
-        (Join-Path $PreparedDest "to-spec/SKILL.md") `
-        "A configured tracker does not by itself authorize an external write"
-    Apply-OverlayPatch `
-        (Join-Path $Dest "patches/to-tickets-local.patch") `
-        (Join-Path $PreparedDest "to-tickets/SKILL.md") `
-        'A ticket may start when every ticket in its "Blocked by" list is complete'
-
     foreach ($ManagedSkillPath in $ManagedSkillPaths) {
         $ManagedPath = Join-Path $RepoRoot $ManagedSkillPath
         if (Test-Path -LiteralPath $ManagedPath) {
@@ -115,6 +84,7 @@ try {
     }
 
     Write-Host "Updated $($SkillSources.Count) explicitly selected Matt Pocock skills in $Dest"
+    Write-Host "Upstream commit: $UpstreamCommit"
     Write-Host ""
     Write-Host "Review vendored skill changes before committing:"
     Invoke-Git -C $RepoRoot status --short -- external/mattpocock-skills

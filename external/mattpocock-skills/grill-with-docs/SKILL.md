@@ -4,4 +4,4 @@ description: A relentless interview to sharpen a plan or design, which also crea
 disable-model-invocation: true
 ---
 
-Run a `/batch-grill-me` session while sharpening domain terms in `CONTEXT.md` and recording only durable, trade-off-bearing architectural decisions as ADRs.
+Call the Skill tool twice, for "grilling" and "domain-modeling".

@@ -22,27 +22,22 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 SKILL_NAMES=(
-  batch-grill-me
+  domain-modeling
   grill-with-docs
-  handoff
-  to-spec
-  to-tickets
+  grilling
 )
 UPSTREAM_PATHS=(
-  skills/in-progress/batch-grill-me
+  skills/engineering/domain-modeling
   skills/engineering/grill-with-docs
-  skills/productivity/handoff
-  skills/engineering/to-spec
-  skills/engineering/to-tickets
+  skills/productivity/grilling
 )
 
 git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills "$TMP/repo"
+UPSTREAM_COMMIT="$(git -C "$TMP/repo" rev-parse HEAD)"
 git -C "$TMP/repo" sparse-checkout set --no-cone \
-  '/skills/in-progress/batch-grill-me' \
+  '/skills/engineering/domain-modeling' \
   '/skills/engineering/grill-with-docs' \
-  '/skills/productivity/handoff' \
-  '/skills/engineering/to-spec' \
-  '/skills/engineering/to-tickets'
+  '/skills/productivity/grilling'
 
 for upstream_path in "${UPSTREAM_PATHS[@]}"; do
   if [ ! -f "$TMP/repo/$upstream_path/SKILL.md" ]; then
@@ -82,7 +77,6 @@ fi
 PREPARED_ROOT="$TMP/prepared"
 PREPARED_DEST="$PREPARED_ROOT/external/mattpocock-skills"
 mkdir -p "$PREPARED_DEST"
-git -C "$PREPARED_ROOT" init --quiet
 
 for i in "${!SKILL_NAMES[@]}"; do
   name="${SKILL_NAMES[$i]}"
@@ -96,35 +90,6 @@ for i in "${!SKILL_NAMES[@]}"; do
   fi
 done
 
-apply_overlay() {
-  local patch="$1"
-  local target="$2"
-  local marker="$3"
-
-  if grep -Fq -- "$marker" "$target"; then
-    return
-  fi
-  if git -C "$PREPARED_ROOT" apply --unidiff-zero --check "$patch"; then
-    git -C "$PREPARED_ROOT" apply --unidiff-zero "$patch"
-  else
-    echo "Unable to reapply $patch after the upstream refresh." >&2
-    exit 1
-  fi
-}
-
-apply_overlay \
-  "$DEST/patches/grill-with-docs-local.patch" \
-  "$PREPARED_DEST/grill-with-docs/SKILL.md" \
-  '/batch-grill-me'
-apply_overlay \
-  "$DEST/patches/to-spec-local.patch" \
-  "$PREPARED_DEST/to-spec/SKILL.md" \
-  'A configured tracker does not by itself authorize an external write'
-apply_overlay \
-  "$DEST/patches/to-tickets-local.patch" \
-  "$PREPARED_DEST/to-tickets/SKILL.md" \
-  'A ticket may start when every ticket in its "Blocked by" list is complete'
-
 for managed_path in "${MANAGED_SKILL_PATHS[@]}"; do
   rm -rf "$REPO_ROOT/$managed_path"
 done
@@ -133,6 +98,7 @@ for name in "${SKILL_NAMES[@]}"; do
 done
 
 echo "Updated ${#SKILL_NAMES[@]} explicitly selected Matt Pocock skills in $DEST"
+echo "Upstream commit: $UPSTREAM_COMMIT"
 echo
 echo "Review vendored skill changes before committing:"
 git -C "$REPO_ROOT" status --short -- external/mattpocock-skills
