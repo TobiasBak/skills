@@ -1,0 +1,6 @@
+interface:
+  display_name: "Maintainability Audit"
+  short_description: "Audit codebase maintainability with receipts"
+  default_prompt: "Use $maintainability-audit to audit this codebase for evidence-backed structural smells and recommend coherent remedies."
+policy:
+  allow_implicit_invocation: false
