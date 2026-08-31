@@ -1,109 +1,123 @@
 ---
 name: maintainability-audit
-description: Audit whether a codebase stays understandable, changeable, resumable, and honestly verifiable across fresh agent contexts. Invoke manually for agent-native maintainability; do not use as a general bug, reliability, security, performance, or test-coverage review.
+description: Audit source-code design for codebases developed entirely through coding agents. Find structural smells that make agent implementation, refactoring, review, verification, and handoff accumulate debt. Do not use for agents operating the product or for general bug, reliability, security, performance, or coverage review.
 disable-model-invocation: true
 ---
 
-# Maintainability audit
+# Agent-native source maintainability audit
 
-Audit the repository as the durable handoff between agents. Find structural problems that cause repeated fresh agents to misunderstand the system, change the wrong place, accumulate parallel patches, lose unfinished state, or trust evidence that does not prove the behavior they are changing.
+Audit whether repeated coding agents can keep the source simple, coherent, and changeable over time. Tobias performs software development through agents: exploration, design, implementation, review, validation, and continuation all happen through agent contexts. There is no later human coding or routine source-review pass that will repair locally convenient choices.
 
-Judge the simplest coherent resulting system, not the smallest diff. A larger change may be simpler when it removes competing truths or restores one clear owner. A tiny patch may be worse when it adds another exception or path.
+In this skill, **agent means a coding agent changing the source code**. It does not mean a product user, operator, deployment actor, support tool, autonomous runtime, or recovery process. A codebase can be agent-native for development even when no agent ever operates the product.
 
 Invocation authorizes read-only inspection and recommendations. Do not edit code, configuration, tests, documentation, generated files, or history unless the user explicitly authorizes remediation. Preserve unrelated and concurrent work.
 
-## Establish the real system
+## Start from source-development work
 
-Start from the requested scope and governing repository instructions. Adapt the investigation to the codebase and question. Do not impose one sequence, checklist score, numeric threshold, or finding count.
+Audit representative changes an implementation agent may realistically make. Ground them in current architecture, actual consumers, repository history, repeated feature areas, or stated product direction. Do not invent operational tasks merely because an agent could theoretically perform them.
 
-Trace representative behavior through its actual boundaries:
+Examples of relevant tasks include:
 
-- public entry points and callers;
-- ownership of decisions, data, state, and effects;
-- transformations and control flow between those owners;
-- persistence, network, filesystem, process, clock, randomness, and other effects;
-- public or real-use verification seams;
-- relevant history when it explains why a boundary exists, whether a path is still live, or how repeated patches accumulated.
+- add or change a domain field across intake, models, UI, planning, execution, and evidence;
+- add a customer rule, order source, workflow stage, or integration behavior;
+- replace a shared model, provider, persistence boundary, or public package contract;
+- fix a recurring behavior whose ownership spans several modules;
+- refactor an implementation while preserving its public behavior;
+- review or continue another agent's incomplete source change.
 
-Use definitions, reverse references, runtime wiring, configuration, tests, and narrow history queries as evidence. Search alternate names and routes before concluding that an owner, caller, verifier, or replacement does not exist. Treat code and runtime wiring as current implementation evidence. Treat tests and prose as intended contracts only where their authority is established.
+For each representative change, trace:
 
-Keep observed facts, interpretations, and proposals separate. Do not infer runtime use from mere existence or infer obsolescence from age.
+- what names and paths repository search reveals;
+- which module, package, type, or model appears to own the decision;
+- the actual producers, consumers, effects, and edit sites;
+- which changes are cohesive and which cross unrelated owners;
+- which public or real-use verifier permits internal redesign;
+- what durable source, tests, types, decisions, or checkpoints let another coding agent continue.
 
-Trace representative change trajectories, not just runtime behavior. Start with a realistic task a later agent may receive. Follow what repository search reveals, which owner appears authoritative, which other files must move with it, what state survives interruption, and what public evidence would let a fresh agent accept the result.
+Use history to identify real change patterns and patch accumulation, not as a score. Age, churn, and commit count are clues only.
 
-## Enforce the agent-native boundary
+## Inspect development structure
 
-A correctness, concurrency, reliability, performance, security, or usability problem is not an agent-native finding merely because it is serious. Admit it only when repository structure or durable project state creates a repeatable agent-maintenance failure.
+Look for structural mechanisms that make repeated agent-written changes degrade the codebase:
 
-A supported finding must show at least one concrete mechanism such as:
+- **competing ownership:** several source locations can independently decide the same domain fact or policy;
+- **poor change locality:** one coherent product change requires scattered edits across unrelated modules or packages;
+- **patch accretion:** cases and exceptions accumulate beside an uncorrected model or boundary;
+- **lying source boundaries:** names, types, APIs, or dependency direction claim ownership that runtime wiring does not honor;
+- **parallel implementations:** multiple plausible paths perform the same responsibility and can evolve independently;
+- **context-heavy design:** a bounded change requires understanding unrelated subsystems because responsibilities are fused or effects leak across boundaries;
+- **fragile verification:** tests lock local implementation details, validate only one copy of duplicated behavior, or cannot protect a coherent refactor at the public seam;
+- **weak source handoff:** non-obvious rationale, invariants, generated authority, or incomplete implementation state cannot be recovered from durable repository artifacts;
+- **speculative structure:** indirection, configuration, extension points, or generality increase the search and edit space without a current consumer.
 
-- competing truths or plausible paths lead a fresh agent to change one owner while another remains authoritative;
-- the apparent owner hides required changes across unrelated components, so locally correct patches predictably leave the system inconsistent;
-- names, contracts, types, dependency direction, or runtime wiring describe a boundary that the implementation does not honor;
-- unfinished work, applied state, rationale, or acceptance evidence cannot be reconstructed from durable artifacts, so another agent cannot resume safely;
-- the available verifier accepts a materially different behavior from the public or production boundary, causing agents to accept false evidence;
-- repeated changes or history show agents repairing symptoms at several sites because the owning model or seam remains wrong.
+Prefer the simplest coherent resulting system, not the smallest diff. A focused refactor may be simpler when it restores one owner or removes parallel paths. Do not turn local evidence into unrelated cleanup or a universal abstraction.
 
-For every candidate, state the agent task, the repository evidence a fresh agent would encounter, the wrong or unnecessarily expensive action that evidence invites, and how the damage compounds across later changes. If that chain is missing, the candidate is out of scope.
+## Enforce the source-development boundary
 
-Use this counterfactual: if a normal local bug fix completely removes the problem and leaves no agent-specific ownership, handoff, change-locality, or verifier problem, exclude it. For example, an unsafe retry, non-atomic write, task crash, UI race, missing test, or malformed input handler is ordinarily a bug. It belongs here only when the codebase's competing authority, lying boundary, unreconstructable state, or misleading verifier is the demonstrated reason repeated agents will misunderstand or compound it.
+A candidate is an agent-native source finding only when all of these are demonstrated:
 
-## Look for structural smells
+1. A realistic design, implementation, refactor, review, verification, or handoff task is grounded in this codebase.
+2. Repository structure, not merely a runtime defect, makes that source task hard to locate, contain, review, continue, or verify.
+3. A fresh coding agent is likely to make a specific incomplete patch, miss an owner, preserve a false abstraction, or accept weak evidence.
+4. Repeated source changes compound the problem through more branches, duplicated rules, wider ripple effects, or less trustworthy verification.
+5. The proposed remedy primarily makes later source development simpler and more maintainable.
 
-Consider these as prompts, not automatic findings:
+Reject the candidate when the chain is incomplete.
 
-- patch accretion, where new cases stack beside an uncorrected model or boundary;
-- duplicate truth, where several artifacts can independently decide the same fact;
-- blurred ownership, where no component clearly owns a decision, invariant, state transition, or effect;
-- ripple-heavy coupling, where one behavior change requires unrelated owners to move together;
-- lying abstractions, whose name or interface hides special cases, narrower semantics, or leaked implementation details;
-- hidden effects or state that callers cannot see, control, isolate, or reconstruct;
-- weak public verifiers, where the claimed behavior cannot be checked at the boundary users or callers rely on;
-- poor resumability, where a fresh agent cannot recover the current owner, state, decision, or next meaningful check from stable artifacts;
-- obsolete or parallel paths that remain plausible, reachable, or authoritative enough to misdirect changes;
-- speculative complexity that adds indirection, configuration, extension points, or generality without a current requirement or consumer.
+Do not audit whether an agent can use, deploy, administer, diagnose, or recover the running product unless the user explicitly requests that different review. Operational interruption, ambiguous side effects, runtime reconciliation, agent-facing CLI guidance, and deployment resumability are outside this skill by default.
 
-Follow the evidence beyond the named smell when the real problem has a different shape. Do not recommend documentation to conceal unclear ownership or duplicated behavior that the implementation itself should resolve. Do not convert an ordinary code review into an agent-native audit by adding the phrase "a future agent" to a generic failure scenario.
+A correctness, concurrency, reliability, security, performance, or usability problem is not a finding merely because agents wrote the code. If a normal local bug fix removes the problem and does not make later source changes easier to locate, contain, review, or verify, exclude it. Unsafe retries, non-atomic writes, task crashes, stale UI state, malformed input, missing pagination, and low coverage are ordinary engineering issues until a separate source-structure mechanism is proven.
 
-## Separate clues from findings
+Use this counterfactual:
 
-Do not call something technical debt merely because it is old, large, frequently changed, has TODOs, or has low test coverage. Naming taste, style dislike, abstraction depth, dependency count, a long call chain, and an ordinary runtime defect are not findings either. Use them as clues about where to inspect.
+> After the proposed change, will the next coding agent implementing a related feature or refactor need less unrelated context, face fewer plausible edit locations, touch fewer independent owners, and have a clearer behavioral verifier?
 
-Report a finding when you can show how repository structure makes a realistic agent change harder to locate, understand, contain, resume, or verify. Support it with exact paths, symbols, callers, wiring, history, durable state, or verifier behavior. Runtime observations may demonstrate the consequence, but they do not supply the agent-native mechanism by themselves.
+If not, the candidate does not belong in this audit.
 
-When evidence is incomplete, report a suspicion and the decisive check still needed. Do not promote it to a finding.
+Do not manufacture relevance by writing "a future agent might" before a generic bug scenario. Do not treat product runtime state as a coding-agent handoff merely because an agent could inspect it.
+
+## Require source receipts
+
+Support findings with exact definitions, references, imports, callers, runtime composition, tests, configuration, and narrow history where it proves repeated change behavior. Search alternate names and paths before claiming an owner or verifier is absent.
+
+For a scattered-change finding, show the actual edit graph and why the sites own one decision rather than legitimate separate policies. For duplicated truth, show that both copies are live or plausible authorities. For a verifier finding, show the source change it falsely accepts or prevents. For a handoff finding, show which source intent or incomplete work cannot be reconstructed and why code, types, tests, history, or decisions do not already preserve it.
+
+File size, age, TODOs, churn, low coverage, naming taste, abstraction depth, dependency count, long call chains, and stylistic dislike are not sufficient evidence. Large cohesive modules and small misleading modules are both possible.
+
+When evidence is incomplete, report the suspicion and the decisive source check still needed. Do not promote it to a finding.
 
 ## Report findings
 
 For each supported finding, include:
 
-- the smell and its exact evidence receipt;
-- the realistic task a fresh agent is likely to receive;
-- what stable repository evidence misdirects, underspecifies, or fails that agent;
-- the concrete wrong patch, missed owner, broken handoff, or false acceptance that follows;
-- how repeated work compounds the cost rather than ending with one local defect;
-- the boundary that should own the behavior, state, decision, or effect;
-- the smallest coherent remedy, judged by the resulting system rather than diff size;
-- material alternatives and their tradeoffs;
-- a verification plan at the affected public or real-use seam that would give later agents trustworthy acceptance evidence;
-- uncertainty, contrary evidence, and any unresolved authority or product decision.
+- the representative source-development task;
+- the exact source receipt and expected owner;
+- what a fresh coding agent will find and the incomplete or locally convenient patch it invites;
+- the actual edit, review, context, or verification cost;
+- how repeated agent changes compound that cost;
+- the smallest coherent source redesign and its owning boundary;
+- material alternatives and tradeoffs;
+- behavioral verification at a stable public or real-use seam that permits internal refactoring;
+- uncertainty, contrary evidence, and any unresolved product or architecture decision.
 
-Explain interactions between findings when one remedy would remove several symptoms. Prefer that shared cause over separate local patches. Recommend no change when the evidence does not support one.
+Explain when one ownership correction removes several symptoms. Recommend no change when the evidence does not support one. Keep ordinary bugs and operational improvements out of the report unless the user separately asks for them.
 
-Keep ordinary bugs and general engineering improvements out of the findings. If they are useful context, list them briefly as explicitly out-of-scope observations only when the user asked for them. Do not let their severity displace the agent-native question.
-
-In an audit-only run, a verification plan does not authorize executing mutating checks. Run checks only when they are known to leave the target unchanged, or isolate their outputs outside the target when the user's authorization permits it. Under a zero-write constraint, do not run tools that may create caches or generated artifacts.
+In an audit-only run, run checks only when they are known to leave the target unchanged or isolate their outputs outside it. Do not create caches or generated artifacts under a zero-write constraint.
 
 ## Remediate only when authorized
 
-If the user authorizes code changes, confirm the exact scope and resolve findings at their owning boundary. Remove replaced paths and duplicate authority when current contracts allow it. Do not preserve parallel behavior through shims or fallbacks without a concrete consumer, persisted-data constraint, or deployment need.
+When the user authorizes code changes, resolve findings at the owning source boundary. Remove replaced paths and duplicate authority when current contracts allow it. Do not preserve parallel behavior through shims or fallbacks without a concrete consumer, persisted-data constraint, or deployment requirement.
 
-Keep the implementation proportional to the proven problem. Do not add general frameworks, configuration, tests, or documentation for speculative variants.
+Keep implementation proportional to the proven development problem. Do not add general frameworks, process, configuration, tests, or documentation for speculative variants.
 
-## Verification
+## Verify source maintainability
 
-For code-affecting remediation, verify observable behavior through the public interface or a representative real-use flow at the affected seam. Cover the maintenance scenario from the finding and confirm the intended owner now controls the behavior. Check that removed or consolidated paths no longer remain live or plausible authorities.
+Verify observable behavior through the public interface or a representative real-use flow at the affected seam. Then recheck the development trajectory that justified the finding:
 
-Compilation, type checks, lint, and private implementation tests may supplement behavioral evidence but do not replace it. Report each check actually run, its result, and any behavior left unverified. If the environment blocks a meaningful check, state the limitation and give the exact continuation route.
+- one owner now controls the changed decision;
+- expected related changes are local and discoverable;
+- removed or consolidated paths no longer remain plausible authorities;
+- behavioral evidence permits internal redesign instead of freezing implementation details;
+- another coding agent can locate the owner, understand the invariant, review the complete edit set, and continue from repository state without the audit transcript.
 
-Recheck continuation quality after the change. A fresh agent should be able to locate the owner, follow the data and effect flow, identify the public verifier, and resume from stable repository evidence without relying on the audit transcript. Report any ambiguity that remains.
+Compilation, type checks, lint, and private implementation tests may supplement this evidence but do not replace it. Report each check actually run and any source-change trajectory left unverified.

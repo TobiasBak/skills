@@ -1,6 +1,6 @@
 interface:
-  display_name: "Agent-Native Maintainability Audit"
-  short_description: "Audit agent-native codebase maintainability"
-  default_prompt: "Use $maintainability-audit to audit whether this codebase supports clean, resumable, and honestly verifiable changes across fresh agent contexts. Exclude ordinary bugs unless their structure causes repeated agent-maintenance failure."
+  display_name: "Agent-Native Source Audit"
+  short_description: "Audit source design for agent-only development"
+  default_prompt: "Use $maintainability-audit to audit whether this source code stays clean, local, reviewable, and verifiable across repeated coding-agent changes. Audit design and implementation maintainability, not agents operating the product or ordinary runtime bugs."
 policy:
   allow_implicit_invocation: false
