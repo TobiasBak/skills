@@ -7,7 +7,6 @@ Personal collection of reusable agent skills for Pi, Codex, and the ChatGPT desk
 Working on this repository assumes these tools are available locally:
 
 - `git`
-- `uv`
 - `rg` / ripgrep
 
 On Windows, install ripgrep with winget:
