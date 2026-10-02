@@ -35,6 +35,7 @@ UPSTREAM_PATHS=(
 git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills "$TMP/repo"
 UPSTREAM_COMMIT="$(git -C "$TMP/repo" rev-parse HEAD)"
 git -C "$TMP/repo" sparse-checkout set --no-cone \
+  '/LICENSE' \
   '/skills/engineering/domain-modeling' \
   '/skills/engineering/grill-with-docs' \
   '/skills/productivity/grilling'
@@ -65,7 +66,7 @@ mapfile -t MANAGED_SKILL_PATHS < <(
 )
 
 if [ "${#MANAGED_SKILL_PATHS[@]}" -gt 0 ]; then
-  PENDING_CHANGES="$(git -C "$REPO_ROOT" status --short -- "${MANAGED_SKILL_PATHS[@]}")"
+  PENDING_CHANGES="$(git -C "$REPO_ROOT" status --short -- "${MANAGED_SKILL_PATHS[@]}" external/mattpocock-skills/LICENSE)"
   if [ -n "$PENDING_CHANGES" ] && [ "$FORCE" -ne 1 ]; then
     echo "Refusing to overwrite vendored skills with uncommitted local changes:" >&2
     echo "$PENDING_CHANGES" >&2
@@ -77,6 +78,7 @@ fi
 PREPARED_ROOT="$TMP/prepared"
 PREPARED_DEST="$PREPARED_ROOT/external/mattpocock-skills"
 mkdir -p "$PREPARED_DEST"
+cp "$TMP/repo/LICENSE" "$PREPARED_DEST/LICENSE"
 
 for i in "${!SKILL_NAMES[@]}"; do
   name="${SKILL_NAMES[$i]}"
@@ -96,6 +98,7 @@ done
 for name in "${SKILL_NAMES[@]}"; do
   cp -R "$PREPARED_DEST/$name" "$DEST/$name"
 done
+cp "$PREPARED_DEST/LICENSE" "$DEST/LICENSE"
 
 echo "Updated ${#SKILL_NAMES[@]} explicitly selected Matt Pocock skills in $DEST"
 echo "Upstream commit: $UPSTREAM_COMMIT"

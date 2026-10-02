@@ -27,6 +27,7 @@ try {
     Invoke-Git clone --depth 1 --filter=blob:none --sparse https://github.com/mattpocock/skills $UpstreamRepo
     $UpstreamCommit = Invoke-Git -C $UpstreamRepo rev-parse HEAD
     Invoke-Git -C $UpstreamRepo sparse-checkout set --no-cone `
+        /LICENSE `
         /skills/engineering/domain-modeling `
         /skills/engineering/grill-with-docs `
         /skills/productivity/grilling
@@ -49,7 +50,7 @@ try {
     $ManagedSkillPaths = @($CurrentSkillPaths + $TargetSkillPaths | Sort-Object -Unique)
 
     if ($ManagedSkillPaths.Count -gt 0) {
-        $PendingChanges = @(Invoke-Git -C $RepoRoot status --short -- $ManagedSkillPaths)
+        $PendingChanges = @(Invoke-Git -C $RepoRoot status --short -- $ManagedSkillPaths external/mattpocock-skills/LICENSE)
         if ($PendingChanges.Count -gt 0 -and !$Force) {
             throw ("Refusing to overwrite vendored skills with uncommitted local changes:`n" +
                 ($PendingChanges -join "`n") +
@@ -60,6 +61,7 @@ try {
     $PreparedRoot = Join-Path $Tmp "prepared"
     $PreparedDest = Join-Path $PreparedRoot "external/mattpocock-skills"
     New-Item -ItemType Directory -Force -Path $PreparedDest | Out-Null
+    Copy-Item -LiteralPath (Join-Path $UpstreamRepo "LICENSE") -Destination (Join-Path $PreparedDest "LICENSE")
 
     foreach ($SkillSource in $SkillSources) {
         $SkillDest = Join-Path $PreparedDest $SkillSource.Name
@@ -82,6 +84,7 @@ try {
     foreach ($SkillSource in $SkillSources) {
         Copy-Item -Recurse -LiteralPath (Join-Path $PreparedDest $SkillSource.Name) -Destination (Join-Path $Dest $SkillSource.Name)
     }
+    Copy-Item -Force -LiteralPath (Join-Path $PreparedDest "LICENSE") -Destination (Join-Path $Dest "LICENSE")
 
     Write-Host "Updated $($SkillSources.Count) explicitly selected Matt Pocock skills in $Dest"
     Write-Host "Upstream commit: $UpstreamCommit"
